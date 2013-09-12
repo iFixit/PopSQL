@@ -110,8 +110,18 @@ class QueryGenerator {
       }
 
       list($clauses, $params) = $args;
-      $clauses = $clauses ?: [];
-      $params = $params ?: [];
+
+      if (is_null($clauses)) {
+         $clauses = [];
+      } else if (!is_array($clauses)) {
+         $clauses = [$clauses];
+      }
+
+      if (is_null($params)) {
+         $params = [];
+      } else if (!is_array($params)) {
+         $params = [$params];
+      }
 
       $this->clauses[$method] = array_merge($this->clauses[$method], $clauses);
       $this->params[$method] = array_merge($this->params[$method], $params);
