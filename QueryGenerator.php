@@ -109,17 +109,20 @@ class QueryGenerator {
          throw new Exception("Method \"$method\" does not exist.");
       }
 
-      list($clauses, $params) = $args;
+      if (count($args) < 1) {
+         throw new Exception("Missing argument 1 (\$clauses) for $method()");
+      } else if (count($args) < 2) {
+         $clauses = reset($args);
+         $params = [];
+      } else {
+         list($clauses, $params) = $args;
+      }
 
-      if (is_null($clauses)) {
-         $clauses = [];
-      } else if (!is_array($clauses)) {
+      if (!is_array($clauses)) {
          $clauses = [$clauses];
       }
 
-      if (is_null($params)) {
-         $params = [];
-      } else if (!is_array($params)) {
+      if (!is_array($params)) {
          $params = [$params];
       }
 
@@ -169,3 +172,4 @@ class QueryGenerator {
       return $prefix . implode($glue, $this->clauses[$method]) . $suffix;
    }
 }
+
