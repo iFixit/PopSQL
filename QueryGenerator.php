@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
  * A simple query generator for conditionally building MySQL SELECT statements.
