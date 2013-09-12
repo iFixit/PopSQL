@@ -21,9 +21,9 @@ class QueryGeneratorTest extends PHPUnit_Framework_TestCase {
          $qGen = new QueryGenerator();
          $qGen->build();
       };
-      $this->assertTrue($this->didThrowException($missingSelect));
-      $this->assertTrue($this->didThrowException($missingFrom));
-      $this->assertTrue($this->didThrowException($missingSelectAndFrom));
+      $this->assertTrue((bool)$this->didThrowException($missingSelect));
+      $this->assertTrue((bool)$this->didThrowException($missingFrom));
+      $this->assertTrue((bool)$this->didThrowException($missingSelectAndFrom));
    }
 
    public function testSmallQuery() {
@@ -34,7 +34,8 @@ class QueryGeneratorTest extends PHPUnit_Framework_TestCase {
 
          return $qGen->build();
       };
-      $this->assertFalse($this->didThrowException($callback));
+      $error = $this->didThrowException($callback);
+      $this->assertFalse($error, $error);
 
       $expectedQuery = <<<EOT
 SELECT field
@@ -64,7 +65,8 @@ EOT;
 
          return $qGen->build();
       };
-      $this->assertFalse($this->didThrowException($callback));
+      $error = $this->didThrowException($callback);
+      $this->assertFalse($error, $error);
 
       $expectedQuery = <<<EOT
 SELECT field1, field2
@@ -84,12 +86,33 @@ EOT;
       $this->assertSame($actualParams, $expectedParams);
    }
 
+   public function testSingleArguments() {
+      $callback = function() {
+         $qGen = new QueryGenerator();
+         $qGen->select('field');
+         $qGen->from('table');
+
+         return $qGen->build();
+      };
+      $error = $this->didThrowException($callback);
+      $this->assertFalse($error, $error);
+
+      $expectedQuery = <<<EOT
+SELECT field
+FROM table
+EOT;
+      $expectedParams = [];
+      list($actualQuery, $actualParams) = $callback();
+      $this->assertEquals($actualQuery, $expectedQuery);
+      $this->assertEquals($actualParams, $expectedParams);
+   }
+
    public function didThrowException($callback) {
       try {
          $callback();
          return false;
       } catch (Exception $e) {
-         return true;
+         return $e->getMessage() ?: true;
       }
    }
 }
