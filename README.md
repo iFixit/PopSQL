@@ -4,8 +4,8 @@
 
 ## What is it?
 
-PopSQL provides a simple, objective approach to conditionally constructing
-MySQL SELECT statements.
+PopSQL (pronounced "popsicle") provides a simple, objective approach to
+conditionally constructing MySQL SELECT statements.
 
 ## Why do I want it?
 
