@@ -1,11 +1,11 @@
-# PHPQueryGenerator
+# PopSQL
 
-[![Build Status](https://secure.travis-ci.org/iFixit/PHPQueryGenerator.png?branch=master)](http://travis-ci.org/iFixit/PHPQueryGenerator)
+[![Build Status](https://secure.travis-ci.org/iFixit/PopSQL.png?branch=master)](http://travis-ci.org/iFixit/PopSQL)
 
 ## What is it?
 
-PHPQueryGenerator provides a simple, objective approach to conditionally
-constructing MySQL SELECT statements.
+PopSQL provides a simple, objective approach to conditionally constructing
+MySQL SELECT statements.
 
 ## Why do I want it?
 
