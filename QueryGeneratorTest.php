@@ -108,9 +108,9 @@ EOT;
    }
 
    public function testUpdateQuery() {
-      $qGen = new QueryGenerator();
-      $qGen->update('table');
-      $qGen->set('field', 'value');
+      $qGen = (new QueryGenerator())
+         ->update('table')
+         ->set('field', 'value');
       list($actualQuery, $actualParams) = $qGen->build();
 
       $expectedQuery = <<<EOT
@@ -125,6 +125,31 @@ EOT;
       list($actualQuery, $actualParams) = $qGen->build();
       $expectedQuery = <<<EOT
 UPDATE table
+SET field = ?,
+field = other_column
+EOT;
+      $this->assertEquals($actualQuery, $expectedQuery);
+      $this->assertEquals($actualParams, $expectedParams);
+   }
+
+   public function testInsertQuery() {
+      $qGen = (new QueryGenerator())
+         ->insert('table')
+         ->set('field', 'value');
+      list($actualQuery, $actualParams) = $qGen->build();
+
+      $expectedQuery = <<<EOT
+INSERT table
+SET field = ?
+EOT;
+      $expectedParams = ['value'];
+      $this->assertEquals($actualQuery, $expectedQuery);
+      $this->assertEquals($actualParams, $expectedParams);
+
+      $qGen->set('field = other_column');
+      list($actualQuery, $actualParams) = $qGen->build();
+      $expectedQuery = <<<EOT
+INSERT table
 SET field = ?,
 field = other_column
 EOT;

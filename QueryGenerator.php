@@ -48,6 +48,11 @@ class QueryGenerator {
          'glue' => ', ',
          'suffix' => '',
       ],
+      'insert' => [
+         'prefix' => 'INSERT ',
+         'glue' => ', ',
+         'suffix' => '',
+      ],
       'set' => [
          'prefix' => 'SET ',
          'glue' => ",\n",
@@ -148,12 +153,13 @@ class QueryGenerator {
     * Returns an array containing the query and paramter list, respectively.
     */
    public function build() {
+      $insert = $this->clauses['insert'];
       $update = $this->clauses['update'];
       $select = $this->clauses['select'];
       $from = $this->clauses['from'];
-      if (!$select && !$from & !$update) {
-         throw new Exception('Query must have an UPDATE or (SELECT and FROM) clauses.');
-      } else if (!$update) {
+      if (!$select && !$from && !$update && !$insert) {
+         throw new Exception('Query must have UPDATE or INSERT or (SELECT and FROM) clauses.');
+      } else if (!$update && !$insert) {
          if (!$select) {
             throw new Exception('Query must have a SELECT clause.');
          } else if (!$from) {
