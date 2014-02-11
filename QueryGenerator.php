@@ -43,6 +43,16 @@ class QueryGenerator {
          'glue' => ', ',
          'suffix' => ''
       ],
+      'update' => [
+         'prefix' => 'UPDATE ',
+         'glue' => ', ',
+         'suffix' => '',
+      ],
+      'set' => [
+         'prefix' => 'SET ',
+         'glue' => ",\n",
+         'suffix' => ''
+      ],
       'from' => [
          'prefix' => 'FROM ',
          'glue' => ', ',
@@ -138,15 +148,18 @@ class QueryGenerator {
     * Returns an array containing the query and paramter list, respectively.
     */
    public function build() {
+      $update = $this->clauses['update'];
       $select = $this->clauses['select'];
       $from = $this->clauses['from'];
-      if (!$select && !$from) {
-         throw new Exception('Query must have SELECT and FROM clauses.');
-      } else if (!$select) {
-         throw new Exception('Query must have a SELECT clause.');
-      } else if (!$from) {
-         throw new Exception('Query must have a FROM clause.');
-      }
+      if (!$select && !$from & !$update) {
+         throw new Exception('Query must have an UPDATE or (SELECT and FROM) clauses.');
+      } else if (!$update) {
+         if (!$select) {
+            throw new Exception('Query must have a SELECT clause.');
+         } else if (!$from) {
+            throw new Exception('Query must have a FROM clause.');
+         }
+     }
 
       $clauses = $params = [];
       foreach (self::$methods as $method => $_) {
@@ -166,10 +179,25 @@ class QueryGenerator {
     *    collapse('where') => 'WHERE (foo = ?) AND (bar != ?)'
     */
    private function collapse($method) {
+      if ($method == 'set') {
+         $this->clauses[$method] = array_map([$this, '_expandSet'], $this->clauses[$method]);
+      }
       $prefix = self::$methods[$method]['prefix'];
       $suffix = self::$methods[$method]['suffix'];
       $glue = self::$methods[$method]['glue'];
       return $prefix . implode($glue, $this->clauses[$method]) . $suffix;
+   }
+
+   /**
+    * Transform a string passed into ->set($str) into a column 
+    * assignment if it is not already one.
+    *
+    * Note, a presence of '=' assumes this is a full expression and nothing 
+    * more is needed.
+    */
+   protected function _expandSet($column) {
+      $fullExpression = strpos($column, '=') !== false;
+      return $fullExpression ? $column : "$column = ?";
    }
 }
 
