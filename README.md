@@ -59,9 +59,9 @@ $qGen->from('my_table mt')->
  join('JOIN my_other_table mot ON mt.field1 > mot.value + ?', 7);
 
 if ($someCondition) {
-   qGen->where('field1 > ? AND field3 < ?', [0, 1337]);
+   $qGen->where('field1 > ? AND field3 < ?', [0, 1337]);
 } else if ($someOtherCondition) {
-   qGen->where('field4 != "" OR field2 < ?', 0);
+   $qGen->where('field4 != "" OR field2 < ?', 0);
 }
 
 list($query, $params) = $qGen->build();
@@ -69,7 +69,7 @@ list($query, $params) = $qGen->build();
 ```
 
 QueryGenerators support all major clauses found in a select statement (select,
-from, join, where, groupm having, order, limit, and offset).
+from, join, where, group, having, order, limit, and offset).
 
 Simply call the member function of the clause you want to add to, passing
 strings of SQL and (optionally) parameters for use in prepared statements.
