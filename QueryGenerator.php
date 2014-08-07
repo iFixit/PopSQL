@@ -87,12 +87,14 @@ class QueryGenerator {
 
    private $clauses;
    private $params;
+   private $allowIncomplete;
 
-   public function __construct() {
+   public function __construct($allowIncomplete = false) {
       $this->clauses = [];
       $this->params = [];
+      $this->allowIncomplete = $allowIncomplete;
 
-      foreach (self::$methods as $method => $_) {
+      foreach (array_keys(self::$methods) as $method) {
          $this->clauses[$method] = [];
          $this->params[$method] = [];
       }
@@ -138,18 +140,20 @@ class QueryGenerator {
     * Returns an array containing the query and paramter list, respectively.
     */
    public function build() {
-      $select = $this->clauses['select'];
-      $from = $this->clauses['from'];
-      if (!$select && !$from) {
-         throw new Exception('Query must have SELECT and FROM clauses.');
-      } else if (!$select) {
-         throw new Exception('Query must have a SELECT clause.');
-      } else if (!$from) {
-         throw new Exception('Query must have a FROM clause.');
+      if (!$this->allowIncomplete) {
+         $select = $this->clauses['select'];
+         $from = $this->clauses['from'];
+         if (!$select && !$from) {
+            throw new Exception('Query must have SELECT and FROM clauses.');
+         } else if (!$select) {
+            throw new Exception('Query must have a SELECT clause.');
+         } else if (!$from) {
+            throw new Exception('Query must have a FROM clause.');
+         }
       }
 
       $clauses = $params = [];
-      foreach (self::$methods as $method => $_) {
+      foreach (array_keys(self::$methods) as $method) {
          if ($this->clauses[$method]) {
             $clauses[] = $this->collapse($method);
             $params = array_merge($params, $this->params[$method]);
