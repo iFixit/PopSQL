@@ -5,7 +5,7 @@
 ## What is it?
 
 PopSQL (pronounced "popsicle") provides a simple, objective approach to
-conditionally constructing MySQL SELECT statements.
+conditionally constructing MySQL statements.
 
 ## Why do I want it?
 
@@ -68,12 +68,6 @@ list($query, $params) = $qGen->build();
 
 ```
 
-QueryGenerators support all major clauses found in a select statement (select,
-from, join, where, group, having, order, limit, and offset).
-
-Simply call the member function of the clause you want to add to, passing
-strings of SQL and (optionally) parameters for use in prepared statements.
-
 Assuming `$someCondition` is true and `$someOtherCondition` is false, the
 above example produces the following query:
 
@@ -90,3 +84,13 @@ WHERE field1 > ? AND field3 < ?
 [7, 0, 1337]
 ```
 
+QueryGenerator has support for SELECT, INSERT, REPLACE, UPDATE, and DELETE
+queries. Each of those query types supports a selection of different clauses:
+ * select: from, join, where, group, having, order, limit, offset
+ * insert: set, columns, values, duplicate
+ * replace: set, columns, values
+ * update: set, where, order, limit
+ * delete: from, where, order, limit
+
+Simply call the member function of the clause you want to add to, passing
+strings of SQL and (optionally) parameters for use in prepared statements.
