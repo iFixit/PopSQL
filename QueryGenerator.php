@@ -1,7 +1,7 @@
 <?php
 
 /**
- * A simple query generator for conditionally building MySQL SELECT statements.
+ * A simple query generator for conditionally building MySQL statements.
  *
  * Build clauses by calling their corresponding member functions.
  *
@@ -10,7 +10,8 @@
  * 2. An array of paramters for use in prepared statements.
  *
  * Available clauses / methods are:
- *  select, from, join, where, group, having, order, limit, offset
+ *  select, insert, replace, update, delete, from, join, set, columns, values,
+ *  where, group, having, order, limit, offset, duplicate, modify
  *
  * After all clauses have been built, call the 'build' member function to
  * compose the entire query. This returns an array containing the query and
@@ -34,65 +35,171 @@
  *    ['asdf', 5, 7]
  */
 class QueryGenerator {
-   // The keys of this array are the set of clauses that can compose a SELECT
-   // statement. These correspond to methods that can be called on this class.
-   // The values are the syntax rules for collapsing the corresponding clauses.
+   /**
+    * The keys of this array are the set of clauses that can compose different
+    * statements. These correspond to methods that can be called on this class.
+    * The values are the syntax rules for collapsing the corresponding clauses.
+    */
    private static $methods = [
       'select' => [
-         'prefix' => 'SELECT ',
+         'prefix' => 'SELECT <<MODIFIERS>> ',
          'glue' => ', ',
-         'suffix' => ''
+         'suffix' => '',
+         'requiresArgument' => true,
+      ],
+      'insert' => [
+         'prefix' => 'INSERT <<MODIFIERS>> INTO ',
+         'glue' => ', ',
+         'suffix' => '',
+      ],
+      'replace' => [
+         'prefix' => 'REPLACE <<MODIFIERS>> INTO ',
+         'glue' => ', ',
+         'suffix' => '',
+      ],
+      'update' => [
+         'prefix' => 'UPDATE <<MODIFIERS>> ',
+         'glue' => ', ',
+         'suffix' => '',
+      ],
+      'delete' => [
+         'prefix' => 'DELETE <<MODIFIERS>> ',
+         'glue' => ', ',
+         'suffix' => '',
       ],
       'from' => [
          'prefix' => 'FROM ',
          'glue' => ', ',
-         'suffix' => ''
+         'suffix' => '',
+         'requiresArgument' => true,
       ],
       'join' => [
          'prefix' => '',
          'glue' => "\n",
-         'suffix' => ''
+         'suffix' => '',
+         'requiresArgument' => true,
+      ],
+      'set' => [
+         'prefix' => 'SET ',
+         'glue' => ', ',
+         'suffix' => '',
+         'requiresArgument' => true,
+      ],
+      'columns' => [
+         'prefix' => '',
+         'glue' => ', ',
+         'suffix' => '',
+         'requiresArgument' => true,
+      ],
+      'values' => [
+         'prefix' => 'VALUES (',
+         'glue' => '), (',
+         'suffix' => ')',
+         'requiresArgument' => true,
       ],
       'where' => [
          'prefix' => 'WHERE (',
          'glue' => ') AND (',
-         'suffix' => ')'
+         'suffix' => ')',
+         'requiresArgument' => true,
       ],
       'group' => [
          'prefix' => 'GROUP BY ',
          'glue' => ', ',
-         'suffix' => ''
+         'suffix' => '',
+         'requiresArgument' => true,
       ],
       'having' => [
          'prefix' => 'HAVING (',
          'glue' => ') AND (',
-         'suffix' => ')'
+         'suffix' => ')',
+         'requiresArgument' => true,
       ],
       'order' => [
          'prefix' => 'ORDER BY ',
          'glue' => ', ',
-         'suffix' => ''
+         'suffix' => '',
+         'requiresArgument' => true,
       ],
       'limit' => [
          'prefix' => 'LIMIT ',
          'glue' => '',
-         'suffix' => ''
+         'suffix' => '',
+         'requiresArgument' => true,
       ],
       'offset' => [
          'prefix' => 'OFFSET ',
          'glue' => '',
-         'suffix' => ''
-      ]
+         'suffix' => '',
+         'requiresArgument' => true,
+      ],
+      'duplicate' => [
+         'prefix' => 'ON DUPLICATE KEY UPDATE ',
+         'glue' => ', ',
+         'suffix' => '',
+         'requiresArgument' => true,
+      ],
+      'modify' => [
+         'prefix' => '',
+         'glue' => ' ',
+         'suffix' => '',
+         'requiresArgument' => true,
+      ],
+   ];
+
+   /**
+    * The keys of this array are the primary clauses that can be present in a
+    * MySQL query. Each primary clause has a set of valid sub-clauses that can
+    * be present in a completed query of that type.
+    */
+   private static $possibleClauses = [
+      'select' => ['from', 'join', 'where', 'group', 'having', 'order', 'limit', 'offset'],
+      'insert' => ['set', 'columns', 'values', 'duplicate'],
+      'replace' => ['set', 'columns', 'values'],
+      'update' => ['set', 'where', 'order', 'limit'],
+      'delete' => ['from', 'where', 'order', 'limit'],
+   ];
+
+   /**
+    * Each query type can be formatted in a number of ways according to
+    * different sub-trees of its grammar. Each element in the value arrays of
+    * this array correspond to the minimum required set of sub-clauses needed
+    * in each of these grammar sub-trees. A query will be considered complete
+    * if it has all the sub-clauses listed in any of these sets.
+    */
+   private static $minimumClauses = [
+      'select' => [['from']],
+      'insert' => [['set'], ['columns', 'values']],
+      'replace' => [['set'], ['columns', 'values']],
+      'update' => [['set']],
+      'delete' => [['from']],
+   ];
+
+   /**
+    * Each query type can specify a certain selection of modifiers. They each
+    * change some aspect of how the query runs.
+    */
+   private static $queryModifiers = [
+      'select' => [
+         'ALL', 'DISTINCT', 'DISTINCTROW',
+         'HIGH_PRIORITY',
+         'STRAIGHT_JOIN',
+         'SQL_SMALL_RESULT', 'SQL_BIG_RESULT', 'SQL_BUFFER_RESULT',
+         'SQL_CACHE', 'SQL_NO_CACHE',
+         'SQL_CALC_FOUND_ROWS'
+      ],
+      'insert' => ['LOW_PRIORITY', 'DELAYED', 'HIGH_PRIORITY', 'IGNORE'],
+      'replace' => ['LOW_PRIORITY', 'DELAYED'],
+      'update' => ['LOW_PRIORITY', 'IGNORE'],
+      'delete' => ['LOW_PRIORITY', 'QUICK', 'IGNORE'],
    ];
 
    private $clauses;
    private $params;
-   private $allowIncomplete;
 
-   public function __construct($allowIncomplete = false) {
+   public function __construct() {
       $this->clauses = [];
       $this->params = [];
-      $this->allowIncomplete = $allowIncomplete;
 
       foreach (array_keys(self::$methods) as $method) {
          $this->clauses[$method] = [];
@@ -111,7 +218,10 @@ class QueryGenerator {
          throw new Exception("Method \"$method\" does not exist.");
       }
 
-      if (count($args) < 1) {
+      $requiresArgument = (isset(self::$methods[$method]['requiresArgument']) ?
+       self::$methods[$method]['requiresArgument'] : false);
+
+      if ($requiresArgument && count($args) < 1) {
          throw new Exception("Missing argument 1 (\$clauses) for $method()");
       } else if (count($args) < 2) {
          $clauses = reset($args);
@@ -135,31 +245,122 @@ class QueryGenerator {
    }
 
    /**
-    * Combine the clauses and paramters in this QueryGenerator to compose a
+    * Combine the clauses and parameters in this QueryGenerator to compose a
     * complete query and paramter list.
+    *
+    * Incomplete queries will cause a MissingClauseException to be thrown
+    * (one of MissingPrimaryClauseException or MissingRequiredClauseException).
+    *
     * Returns an array containing the query and paramter list, respectively.
     */
    public function build() {
-      if (!$this->allowIncomplete) {
-         $select = $this->clauses['select'];
-         $from = $this->clauses['from'];
-         if (!$select && !$from) {
-            throw new Exception('Query must have SELECT and FROM clauses.');
-         } else if (!$select) {
-            throw new Exception('Query must have a SELECT clause.');
-         } else if (!$from) {
-            throw new Exception('Query must have a FROM clause.');
+      $this->assertCompleteQuery();
+
+      $primaryMethod = $this->getPrimaryMethod();
+      $setMethods = $this->getSetMethods();
+
+      $clauses = [$this->collapse($primaryMethod)];
+      $params = $this->params[$primaryMethod];
+
+      foreach (self::$possibleClauses[$primaryMethod] as $method) {
+         // All required clauses must be present at this point, but
+         // self::$possibleClauses contains all possible sets of clauses, not
+         // just the ones required by this subtree of the grammar.
+         if (!isset($setMethods[$method])) {
+            continue;
          }
+
+         $clauses[] = $this->collapse($method);
+         $params = array_merge($params, $this->params[$method]);
       }
+
+      return [implode("\n", $clauses), $params];
+   }
+
+   /**
+    * Combine the clauses and parameters in this QueryGenerator to compose a
+    * complete query and paramter list.
+    *
+    * Incomplete queries will not trigger an exception to be thrown, but
+    * generated queries are not guaranteed to be correctly formatted.
+    *
+    * Returns an array containing the query and paramter list, respectively.
+    */
+   public function buildIncomplete() {
+      $primaryClauses = self::getPrimaryClauses();
+      $setMethods = $this->getSetMethods();
 
       $clauses = $params = [];
       foreach (array_keys(self::$methods) as $method) {
-         if ($this->clauses[$method]) {
-            $clauses[] = $this->collapse($method);
-            $params = array_merge($params, $this->params[$method]);
+         // Modifiers are handled automatically by collapse.
+         if ($method == 'modify') {
+            continue;
          }
+
+         // Because we are indiscriminantly interating over every possible
+         // clause we need to verify that each clause we use has been set.
+         if (!isset($setMethods[$method])) {
+            continue;
+         }
+
+         $clauses[] = $this->collapse($method);
+         $params = array_merge($params, $this->params[$method]);
       }
       return [implode("\n", $clauses), $params];
+   }
+
+   /**
+    * Assert the completeness of this QueryGenerator instance by verifying
+    * that all required clauses have been set.
+    */
+   private function assertCompleteQuery() {
+      $primaryMethod = $this->getPrimaryMethod();
+
+      if (!$primaryMethod) {
+         $primaryClauseStr = implode("', '", $this->getPrimaryClauses());
+         throw new MissingPrimaryClauseException(
+          "Missing primary clause. One of '$primaryClauseStr' needed.");
+      }
+
+      $minimumClauses = self::$minimumClauses[$primaryMethod];
+
+      $setMethods = $this->getSetMethods();
+      foreach ($minimumClauses as $option) {
+         $intersection = array_intersect($option, $setMethods);
+         // We will want to compare this array to another for set equality,
+         // so we need to throw away arbitrary ordering.
+         sort($option);
+         sort($intersection);
+
+         // A matching minimum set was found.
+         if ($option == $intersection) {
+            return;
+         }
+      }
+
+      $requiredClauseOptions = array_map(function($option) {
+         return "'" . implode("', '", $option) . "'";
+      }, $minimumClauses);
+      $requiredClauseStr = '{' . implode('}, {', $requiredClauseOptions) . '}';
+      throw new MissingRequiredClauseException(
+       "Missing required clauses. One of $requiredClauseStr needed.");
+   }
+
+   /**
+    * Return the primary clause in this QueryGenerator instance.
+    * If multiple primary clauses have been set, all but the first set clause
+    * will be ignored.
+    */
+   private function getPrimaryMethod() {
+      $primaryClauses = self::getPrimaryClauses();
+      $setMethods = $this->getSetMethods();
+      $setPrimaryClauses = array_intersect($primaryClauses, $setMethods);
+      return reset($setPrimaryClauses);
+   }
+
+   private function getSetMethods() {
+      $methods = array_keys(array_filter($this->clauses));
+      return array_combine($methods, $methods);
    }
 
    /**
@@ -171,9 +372,30 @@ class QueryGenerator {
     */
    private function collapse($method) {
       $prefix = self::$methods[$method]['prefix'];
+
+      // The assumed precondition is that modify's prefix element will never
+      // contain the substring '<<MODIFIERS>>'.
+      if (strpos($prefix, '<<MODIFIERS>>') !== false) {
+         $prefix = str_replace('<<MODIFIERS>>', $this->collapse('modify'), $prefix);
+         // If there are no modifiers to apply we end up with an extra space
+         // after the primary verb.
+         $prefix = str_replace('  ', ' ', $prefix);
+      }
+
       $suffix = self::$methods[$method]['suffix'];
       $glue = self::$methods[$method]['glue'];
-      return $prefix . implode($glue, $this->clauses[$method]) . $suffix;
+      $pieces = implode($glue, $this->clauses[$method]);
+      return "$prefix$pieces$suffix";
+   }
+
+   /**
+    * Return the list of primary query clauses.
+    */
+   private static function getPrimaryClauses() {
+      return array_keys(self::$possibleClauses);
    }
 }
 
+class MissingClauseException extends Exception {}
+class MissingPrimaryClauseException extends MissingClauseException {}
+class MissingRequiredClauseException extends MissingClauseException {}
