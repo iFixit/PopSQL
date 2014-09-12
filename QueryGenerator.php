@@ -196,6 +196,7 @@ class QueryGenerator {
 
    private $clauses;
    private $params;
+   private $validateQuery;
 
    public function __construct() {
       $this->clauses = [];
@@ -205,6 +206,8 @@ class QueryGenerator {
          $this->clauses[$method] = [];
          $this->params[$method] = [];
       }
+
+      $this->validateQuery = true;
    }
 
    /**
@@ -249,50 +252,21 @@ class QueryGenerator {
     * complete query and paramter list.
     *
     * Incomplete queries will cause a MissingClauseException to be thrown
-    * (one of MissingPrimaryClauseException or MissingRequiredClauseException).
+    * (one of MissingPrimaryClauseException or MissingRequiredClauseException)
+    * unless `skipValidation` has been called.
     *
     * Returns an array containing the query and paramter list, respectively.
     */
    public function build() {
-      $this->assertCompleteQuery();
-
-      $primaryMethod = $this->getPrimaryMethod();
-      $setMethods = $this->getSetMethods();
-
-      $clauses = [$this->collapse($primaryMethod)];
-      $params = $this->params[$primaryMethod];
-
-      foreach (self::$possibleClauses[$primaryMethod] as $method) {
-         // All required clauses must be present at this point, but
-         // self::$possibleClauses contains all possible sets of clauses, not
-         // just the ones required by this subtree of the grammar.
-         if (!isset($setMethods[$method])) {
-            continue;
-         }
-
-         $clauses[] = $this->collapse($method);
-         $params = array_merge($params, $this->params[$method]);
+      if ($this->validateQuery) {
+         $this->assertCompleteQuery();
       }
 
-      return [implode("\n", $clauses), $params];
-   }
-
-   /**
-    * Combine the clauses and parameters in this QueryGenerator to compose a
-    * complete query and paramter list.
-    *
-    * Incomplete queries will not trigger an exception to be thrown, but
-    * generated queries are not guaranteed to be correctly formatted.
-    *
-    * Returns an array containing the query and paramter list, respectively.
-    */
-   public function buildIncomplete() {
-      $primaryClauses = self::getPrimaryClauses();
       $setMethods = $this->getSetMethods();
 
       $clauses = $params = [];
       foreach (array_keys(self::$methods) as $method) {
-         // Modifiers are handled automatically by collapse.
+         // Modifiers are handled automatically by constructClause.
          if ($method == 'modify') {
             continue;
          }
@@ -303,10 +277,18 @@ class QueryGenerator {
             continue;
          }
 
-         $clauses[] = $this->collapse($method);
+         $clauses[] = $this->constructClause($method);
          $params = array_merge($params, $this->params[$method]);
       }
       return [implode("\n", $clauses), $params];
+   }
+
+   /**
+    * Bypass query validation when building.
+    */
+   public function &skipValidation() {
+      $this->validateQuery = false;
+      return $this;
    }
 
    /**
@@ -347,6 +329,13 @@ class QueryGenerator {
    }
 
    /**
+    * Return the list of primary query clauses.
+    */
+   private static function getPrimaryClauses() {
+      return array_keys(self::$possibleClauses);
+   }
+
+   /**
     * Return the primary clause in this QueryGenerator instance.
     * If multiple primary clauses have been set, all but the first set clause
     * will be ignored.
@@ -368,15 +357,15 @@ class QueryGenerator {
     *
     * Example:
     *    given where clauses 'foo = ?' and 'bar != ?'
-    *    collapse('where') => 'WHERE (foo = ?) AND (bar != ?)'
+    *    constructClause('where') => 'WHERE (foo = ?) AND (bar != ?)'
     */
-   private function collapse($method) {
+   private function constructClause($method) {
       $prefix = self::$methods[$method]['prefix'];
 
       // The assumed precondition is that modify's prefix element will never
       // contain the substring '<<MODIFIERS>>'.
       if (strpos($prefix, '<<MODIFIERS>>') !== false) {
-         $prefix = str_replace('<<MODIFIERS>>', $this->collapse('modify'), $prefix);
+         $prefix = str_replace('<<MODIFIERS>>', $this->constructClause('modify'), $prefix);
          // If there are no modifiers to apply we end up with an extra space
          // after the primary verb.
          $prefix = str_replace('  ', ' ', $prefix);
@@ -386,13 +375,6 @@ class QueryGenerator {
       $glue = self::$methods[$method]['glue'];
       $pieces = implode($glue, $this->clauses[$method]);
       return "$prefix$pieces$suffix";
-   }
-
-   /**
-    * Return the list of primary query clauses.
-    */
-   private static function getPrimaryClauses() {
-      return array_keys(self::$possibleClauses);
    }
 }
 

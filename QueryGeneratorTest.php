@@ -52,7 +52,7 @@ class QueryGeneratorTest extends PHPUnit_Framework_TestCase {
                return $qGen->build();
             };
             $buildIncomplete = function() use ($qGen) {
-               return $qGen->buildIncomplete();
+               return $qGen->skipValidation()->build();
             };
 
             $this->assertTrue((bool)$this->didThrowException($build));
@@ -87,7 +87,7 @@ class QueryGeneratorTest extends PHPUnit_Framework_TestCase {
                return $qGen->build();
             };
             $buildIncomplete = function() use ($qGen) {
-               return $qGen->buildIncomplete();
+               return $qGen->skipValidation()->build();
             };
 
             $this->assertFalse($this->didThrowException($build));
@@ -176,7 +176,7 @@ EOT;
       $this->assertEquals($actualQuery, $expectedQuery);
       $this->assertEquals($actualParams, $expectedParams);
 
-      list($actualQuery, $actualParams) = $qGen->buildIncomplete();
+      list($actualQuery, $actualParams) = $qGen->skipValidation()->build();
       $this->assertEquals($actualQuery, $expectedQuery);
       $this->assertEquals($actualParams, $expectedParams);
    }
