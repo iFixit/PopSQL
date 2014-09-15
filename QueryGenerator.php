@@ -86,9 +86,9 @@ class QueryGenerator {
          'requiresArgument' => true,
       ],
       'columns' => [
-         'prefix' => '',
+         'prefix' => '(',
          'glue' => ', ',
-         'suffix' => '',
+         'suffix' => ')',
          'requiresArgument' => true,
       ],
       'values' => [
