@@ -161,6 +161,24 @@ EOT;
       $this->assertQuery($qGen, $expectedQuery, $expectedParams);
    }
 
+   public function testNestedGenerators() {
+      $where = new QueryGenerator();
+      $where->where('abcd', [1]);
+      $qGen = new QueryGenerator();
+      $qGen->select('field');
+      $qGen->from('table');
+      $qGen->where($where);
+
+      $expectedQuery = <<<EOT
+SELECT field
+FROM table
+WHERE ((abcd))
+EOT;
+      $expectedParams = [1];
+
+      $this->assertQuery($qGen, $expectedQuery, $expectedParams);
+   }
+
    public function testSingleArguments() {
       $qGen = new QueryGenerator();
       $qGen->select('field');
