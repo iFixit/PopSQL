@@ -197,6 +197,7 @@ class QueryGenerator {
    private $clauses;
    private $params;
    private $validateQuery;
+   private $useOr;
 
    public function __construct() {
       $this->clauses = [];
@@ -208,6 +209,7 @@ class QueryGenerator {
       }
 
       $this->validateQuery = true;
+      $this->useOr = false;
    }
 
    /**
@@ -292,6 +294,14 @@ class QueryGenerator {
    }
 
    /**
+    * Use OR when joining where conditions
+    */
+   public function &useOr() {
+      $this->useOr = true;
+      return $this;
+   }
+
+   /**
     * Assert the completeness of this QueryGenerator instance by verifying
     * that all required clauses have been set.
     */
@@ -372,9 +382,21 @@ class QueryGenerator {
       }
 
       $suffix = self::$methods[$method]['suffix'];
-      $glue = self::$methods[$method]['glue'];
+      $glue = $this->getGlue($method);
       $pieces = implode($glue, $this->clauses[$method]);
       return "$prefix$pieces$suffix";
+   }
+
+   /**
+    * return the appropriate glue string for the given clause, taking into 
+    * account $this->useOr
+    */
+   private function getGlue($method) {
+      if ($method !== 'where' || !$this->useOr) {
+         return self::$methods[$method]['glue'];
+      } else {
+         return ") OR (";
+      }
    }
 }
 
