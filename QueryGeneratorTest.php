@@ -142,6 +142,43 @@ EOT;
       $this->assertQuery($qGen, $expectedQuery, $expectedParams);
    }
 
+   public function testUseOr() {
+      $qGen = new QueryGenerator();
+      $qGen->select('field')
+           ->from('table')
+           ->where('1')
+           ->where('2')
+           ->useOr();
+
+      $expectedQuery = <<<EOT
+SELECT field
+FROM table
+WHERE (1) OR (2)
+EOT;
+      $expectedParams = [];
+
+
+      $this->assertQuery($qGen, $expectedQuery, $expectedParams);
+   }
+
+   public function testNestedGenerators() {
+      $where = new QueryGenerator();
+      $where->where('abcd', [1]);
+      $qGen = new QueryGenerator();
+      $qGen->select('field');
+      $qGen->from('table');
+      $qGen->where($where);
+
+      $expectedQuery = <<<EOT
+SELECT field
+FROM table
+WHERE ((abcd))
+EOT;
+      $expectedParams = [1];
+
+      $this->assertQuery($qGen, $expectedQuery, $expectedParams);
+   }
+
    public function testSingleArguments() {
       $qGen = new QueryGenerator();
       $qGen->select('field');

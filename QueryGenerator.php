@@ -42,104 +42,122 @@ class QueryGenerator {
     */
    private static $methods = [
       'select' => [
-         'prefix' => 'SELECT <<MODIFIERS>> ',
+         'clause' => 'SELECT <<MODIFIERS>> ',
+         'prefix' => '',
          'glue' => ', ',
          'suffix' => '',
          'requiresArgument' => true,
       ],
       'insert' => [
-         'prefix' => 'INSERT <<MODIFIERS>> INTO ',
+         'clause' => 'INSERT <<MODIFIERS>> INTO ',
+         'prefix' => '',
          'glue' => ', ',
          'suffix' => '',
       ],
       'replace' => [
-         'prefix' => 'REPLACE <<MODIFIERS>> INTO ',
+         'clause' => 'REPLACE <<MODIFIERS>> INTO ',
+         'prefix' => '',
          'glue' => ', ',
          'suffix' => '',
       ],
       'update' => [
-         'prefix' => 'UPDATE <<MODIFIERS>> ',
+         'clause' => 'UPDATE <<MODIFIERS>> ',
+         'prefix' => '',
          'glue' => ', ',
          'suffix' => '',
       ],
       'delete' => [
-         'prefix' => 'DELETE <<MODIFIERS>> ',
+         'clause' => 'DELETE <<MODIFIERS>> ',
+         'prefix' => '',
          'glue' => ', ',
          'suffix' => '',
       ],
       'from' => [
-         'prefix' => 'FROM ',
+         'clause' => 'FROM ',
+         'prefix' => '',
          'glue' => ', ',
          'suffix' => '',
          'requiresArgument' => true,
       ],
       'join' => [
+         'clause' => '',
          'prefix' => '',
          'glue' => "\n",
          'suffix' => '',
          'requiresArgument' => true,
       ],
       'set' => [
-         'prefix' => 'SET ',
+         'clause' => 'SET ',
+         'prefix' => '',
          'glue' => ', ',
          'suffix' => '',
          'requiresArgument' => true,
       ],
       'columns' => [
+         'clause' => '',
          'prefix' => '(',
          'glue' => ', ',
          'suffix' => ')',
          'requiresArgument' => true,
       ],
       'values' => [
-         'prefix' => 'VALUES (',
+         'clause' => 'VALUES ',
+         'prefix' => '(',
          'glue' => '), (',
          'suffix' => ')',
          'requiresArgument' => true,
       ],
       'where' => [
-         'prefix' => 'WHERE (',
+         'clause' => 'WHERE ',
+         'prefix' => '(',
          'glue' => ') AND (',
          'suffix' => ')',
          'requiresArgument' => true,
       ],
       'group' => [
-         'prefix' => 'GROUP BY ',
+         'clause' => 'GROUP BY ',
+         'prefix' => '',
          'glue' => ', ',
          'suffix' => '',
          'requiresArgument' => true,
       ],
       'having' => [
-         'prefix' => 'HAVING (',
+         'clause' => 'HAVING ',
+         'prefix' => '(',
          'glue' => ') AND (',
          'suffix' => ')',
          'requiresArgument' => true,
       ],
       'order' => [
-         'prefix' => 'ORDER BY ',
+         'clause' => 'ORDER BY ',
+         'prefix' => '',
          'glue' => ', ',
          'suffix' => '',
          'requiresArgument' => true,
       ],
       'limit' => [
-         'prefix' => 'LIMIT ',
+         'clause' => 'LIMIT ',
+         'prefix' => '',
          'glue' => '',
          'suffix' => '',
          'requiresArgument' => true,
       ],
       'offset' => [
-         'prefix' => 'OFFSET ',
+         'clause' => 'OFFSET ',
+         'prefix' => '',
          'glue' => '',
          'suffix' => '',
          'requiresArgument' => true,
       ],
       'duplicate' => [
-         'prefix' => 'ON DUPLICATE KEY UPDATE ',
+         'clause' => 'ON DUPLICATE KEY UPDATE ',
+         'prefix' => '',
          'glue' => ', ',
          'suffix' => '',
          'requiresArgument' => true,
       ],
       'modify' => [
+         'clause' => '',
          'prefix' => '',
          'glue' => ' ',
          'suffix' => '',
@@ -197,6 +215,7 @@ class QueryGenerator {
    private $clauses;
    private $params;
    private $validateQuery;
+   private $useOr;
 
    public function __construct() {
       $this->clauses = [];
@@ -208,6 +227,7 @@ class QueryGenerator {
       }
 
       $this->validateQuery = true;
+      $this->useOr = false;
    }
 
    /**
@@ -233,6 +253,11 @@ class QueryGenerator {
          list($clauses, $params) = $args;
       }
 
+      if ($clauses instanceOf QueryGenerator) {
+         $clauses->skipValidation();
+         list($clauses, $params) = $clauses->build(/* $skipClauses = */ true);
+      }
+
       if (!is_array($clauses)) {
          $clauses = [$clauses];
       }
@@ -255,9 +280,13 @@ class QueryGenerator {
     * (one of MissingPrimaryClauseException or MissingRequiredClauseException)
     * unless `skipValidation` has been called.
     *
+    * @param $skipClauses : Exclude the 'clause' part (WHERE, SELECT, FROM, 
+    *                       ...) of each sub-expression. See constructClause 
+    *                       for more info. This is mostly for internal usage.
+    *
     * Returns an array containing the query and paramter list, respectively.
     */
-   public function build() {
+   public function build($skipClauses = false) {
       if ($this->validateQuery) {
          $this->assertCompleteQuery();
       }
@@ -277,7 +306,7 @@ class QueryGenerator {
             continue;
          }
 
-         $clauses[] = $this->constructClause($method);
+         $clauses[] = $this->constructClause($method, $skipClauses);
          $params = array_merge($params, $this->params[$method]);
       }
       return [implode("\n", $clauses), $params];
@@ -288,6 +317,14 @@ class QueryGenerator {
     */
    public function &skipValidation() {
       $this->validateQuery = false;
+      return $this;
+   }
+
+   /**
+    * Use OR when joining where conditions
+    */
+   public function &useOr() {
+      $this->useOr = true;
       return $this;
    }
 
@@ -353,28 +390,46 @@ class QueryGenerator {
    }
 
    /**
-    * Return a string of the specified SQL clause using its syntax rules.
+    * Return a string of the specified SQL clause using its syntax rules, 
+    * optionally excluding the clause part (i.e. WHERE, SELECT, ...)
     *
     * Example:
     *    given where clauses 'foo = ?' and 'bar != ?'
     *    constructClause('where') => 'WHERE (foo = ?) AND (bar != ?)'
+    *    constructClause('where', false) => '(foo = ?) AND (bar != ?)'
     */
-   private function constructClause($method) {
-      $prefix = self::$methods[$method]['prefix'];
+   private function constructClause($method, $skipClause = false) {
+      $clauseInfo = self::$methods[$method];
+      $prefix = $clauseInfo['prefix'];
+      $clause = $clauseInfo['clause'];
 
+      if ($skipClause) {
+         $clause = '';
       // The assumed precondition is that modify's prefix element will never
       // contain the substring '<<MODIFIERS>>'.
-      if (strpos($prefix, '<<MODIFIERS>>') !== false) {
-         $prefix = str_replace('<<MODIFIERS>>', $this->constructClause('modify'), $prefix);
+      } else if (strpos($clause, '<<MODIFIERS>>') !== false) {
+         $clause = str_replace('<<MODIFIERS>>', $this->constructClause('modify'), $clause);
          // If there are no modifiers to apply we end up with an extra space
          // after the primary verb.
-         $prefix = str_replace('  ', ' ', $prefix);
+         $clause = str_replace('  ', ' ', $clause);
       }
 
-      $suffix = self::$methods[$method]['suffix'];
-      $glue = self::$methods[$method]['glue'];
+      $suffix = $clauseInfo['suffix'];
+      $glue = $this->getGlue($method);
       $pieces = implode($glue, $this->clauses[$method]);
-      return "$prefix$pieces$suffix";
+      return "$clause$prefix$pieces$suffix";
+   }
+
+   /**
+    * return the appropriate glue string for the given clause, taking into 
+    * account $this->useOr
+    */
+   private function getGlue($method) {
+      if ($method !== 'where' || !$this->useOr) {
+         return self::$methods[$method]['glue'];
+      } else {
+         return ") OR (";
+      }
    }
 }
 
