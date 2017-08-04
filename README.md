@@ -86,7 +86,7 @@ WHERE field1 > ? AND field3 < ?
 
 QueryGenerator has support for SELECT, INSERT, REPLACE, UPDATE, and DELETE
 queries. Each of those query types supports a selection of different clauses:
- * select: from, join, where, group, having, order, limit, offset
+ * select: from, join, where, group, having, order, limit, offset, forupdate
  * insert: set, columns, values, duplicate
  * replace: set, columns, values
  * update: set, where, order, limit
