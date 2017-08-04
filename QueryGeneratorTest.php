@@ -208,6 +208,21 @@ EOT;
       $this->assertQuery($qGen, $expectedQuery, $expectedParams);
    }
 
+   public function testForUpdate() {
+      $qGen = new QueryGenerator();
+      $qGen->select('a');
+      $qGen->from('b');
+      $qGen->forUpdate();
+
+      $expectedQuery = <<<EOT
+SELECT a
+FROM b
+FOR UPDATE
+EOT;
+
+      $this->assertQuery($qGen, $expectedQuery, []);
+   }
+
    public function assertQuery($qGen, $expectedQuery, $expectedParams) {
       list($actualQuery, $actualParams) = $qGen->build();
       $this->assertEquals($actualQuery, $expectedQuery);
