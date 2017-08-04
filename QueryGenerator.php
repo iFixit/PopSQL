@@ -163,6 +163,13 @@ class QueryGenerator {
          'suffix' => '',
          'requiresArgument' => true,
       ],
+      'forupdate' => [
+         'clause' => 'FOR UPDATE',
+         'prefix' => '',
+         'glue' => '',
+         'suffix' => '',
+         'requiresArgument' => false,
+      ],
    ];
 
    /**
@@ -171,7 +178,7 @@ class QueryGenerator {
     * be present in a completed query of that type.
     */
    private static $possibleClauses = [
-      'select' => ['from', 'join', 'where', 'group', 'having', 'order', 'limit', 'offset'],
+      'select' => ['from', 'join', 'where', 'group', 'having', 'order', 'limit', 'offset', 'forupdate'],
       'insert' => ['set', 'columns', 'values', 'duplicate'],
       'replace' => ['set', 'columns', 'values'],
       'update' => ['set', 'where', 'order', 'limit'],
