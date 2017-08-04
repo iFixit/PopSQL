@@ -287,8 +287,8 @@ class QueryGenerator {
     * (one of MissingPrimaryClauseException or MissingRequiredClauseException)
     * unless `skipValidation` has been called.
     *
-    * @param $skipClauses : Exclude the 'clause' part (WHERE, SELECT, FROM, 
-    *                       ...) of each sub-expression. See constructClause 
+    * @param $skipClauses : Exclude the 'clause' part (WHERE, SELECT, FROM,
+    *                       ...) of each sub-expression. See constructClause
     *                       for more info. This is mostly for internal usage.
     *
     * Returns an array containing the query and paramter list, respectively.
@@ -397,7 +397,7 @@ class QueryGenerator {
    }
 
    /**
-    * Return a string of the specified SQL clause using its syntax rules, 
+    * Return a string of the specified SQL clause using its syntax rules,
     * optionally excluding the clause part (i.e. WHERE, SELECT, ...)
     *
     * Example:
@@ -428,7 +428,7 @@ class QueryGenerator {
    }
 
    /**
-    * return the appropriate glue string for the given clause, taking into 
+    * return the appropriate glue string for the given clause, taking into
     * account $this->useOr
     */
    private function getGlue($method) {
