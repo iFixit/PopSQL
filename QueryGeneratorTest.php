@@ -1,11 +1,11 @@
 <?php
 
-require("QueryGenerator.php");
+require("./QueryGenerator.php");
 
 /**
  * Designed to work with PHPUnit
  */
-class QueryGeneratorTest extends PHPUnit_Framework_TestCase {
+class QueryGeneratorTest extends PHPUnit\Framework\TestCase {
    public function testIncompleteQuery() {
       $incompleteQueryClauseSets = [
          'select' => [
