@@ -223,6 +223,22 @@ EOT;
       $this->assertQuery($qGen, $expectedQuery, []);
    }
 
+   public function testOnDuplicate() {
+      $qGen = new QueryGenerator();
+      $qGen->insert('a');
+      $qGen->set('b = 1');
+      $qGen->set('c = 1');
+      $qGen->duplicate('b = 2');
+
+      $expectedQuery = <<<EOT
+INSERT INTO a
+SET b = 1, c = 1
+ON DUPLICATE KEY UPDATE b = 2
+EOT;
+
+      $this->assertQuery($qGen, $expectedQuery, []);
+   }
+
    public function assertQuery($qGen, $expectedQuery, $expectedParams) {
       list($actualQuery, $actualParams) = $qGen->build();
       $this->assertEquals($actualQuery, $expectedQuery);
