@@ -149,6 +149,13 @@ class QueryGenerator {
          'suffix' => '',
          'requiresArgument' => true,
       ],
+      'as' => [
+         'clause' => 'AS ',
+         'prefix' => '',
+         'glue' => false,
+         'suffix' => '',
+         'requiresArgument' => true,
+      ],
       'duplicate' => [
          'clause' => 'ON DUPLICATE KEY UPDATE ',
          'prefix' => '',
@@ -179,7 +186,7 @@ class QueryGenerator {
     */
    private static $possibleClauses = [
       'select' => ['from', 'join', 'where', 'group', 'having', 'order', 'limit', 'offset', 'forupdate'],
-      'insert' => ['set', 'columns', 'values', 'duplicate'],
+      'insert' => ['set', 'columns', 'values', 'duplicate', 'as'],
       'replace' => ['set', 'columns', 'values'],
       'update' => ['set', 'where', 'order', 'limit'],
       'delete' => ['from', 'where', 'order', 'limit'],
@@ -271,6 +278,10 @@ class QueryGenerator {
 
       if (!is_array($params)) {
          $params = [$params];
+      }
+
+      if (self::$methods[$method]['glue'] === false && count($this->clauses[$method]) > 1) {
+         throw new Exception("Only one '$method()' is allowed per query");
       }
 
       $this->clauses[$method] = array_merge($this->clauses[$method], $clauses);

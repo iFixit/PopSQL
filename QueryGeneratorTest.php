@@ -226,6 +226,7 @@ EOT;
    public function testOnDuplicate() {
       $qGen = new QueryGenerator();
       $qGen->insert('a');
+      $qGen->as('row');
       $qGen->set('b = 1');
       $qGen->set('c = 1');
       $qGen->duplicate('b = 2');
@@ -233,6 +234,7 @@ EOT;
       $expectedQuery = <<<EOT
 INSERT INTO a
 SET b = 1, c = 1
+AS row
 ON DUPLICATE KEY UPDATE b = 2
 EOT;
 
