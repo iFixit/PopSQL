@@ -449,6 +449,31 @@ class QueryGenerator {
          return ") OR (";
       }
    }
+
+   /**
+    * Debug method to print out the full query with the params inserted at the correct locations
+    */
+   public function debugStringifyQuery(): string {
+      $query = $this->build(true);
+      $params = $query[1];
+      $paramValues = array_reduce($params, function ($carry, $param) {
+         static $isInt = false;
+
+         if ($param === 'i') {
+             $isInt = true;
+         } elseif ($param === 's') {
+             $isInt = false;
+         } else {
+             $carry[] = $isInt ? (int)$param : "'$param'";
+         }
+
+         return $carry;
+      }, []);
+      $query = $query[0];
+      $query = str_replace('?', '%s', $query);
+      $query = vsprintf($query, $paramValues);
+      return $query;
+   }
 }
 
 class MissingClauseException extends Exception {}
