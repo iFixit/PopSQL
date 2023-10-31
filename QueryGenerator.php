@@ -454,22 +454,39 @@ class QueryGenerator {
     * Debug method to print out the full query with the params inserted at the correct locations
     */
    public function debugStringifyQuery(): string {
-      $query = $this->build(true);
-      $params = $query[1];
-      $paramValues = array_reduce($params, function ($carry, $param) {
-         static $isInt = false;
+      [$query, $params] = $this->build();
+      $paramValues = [];
+      for ($i = 0; $i < count($params); $i += 2) {
+         $type = $params[$i];
+         $value = $params[$i + 1];
 
-         if ($param === 'i') {
-             $isInt = true;
-         } elseif ($param === 's') {
-             $isInt = false;
-         } else {
-             $carry[] = $isInt ? (int)$param : "'$param'";
-         }
-
-         return $carry;
-      }, []);
-      $query = $query[0];
+         $typedValue = (function() use ($value, $type) {
+            switch ($type) {
+               case 'i': // matches: define('T_I', 'i'); => Integer / boolean
+                  return (int)$value;
+               case 'd': // matches: define('T_D', 'd'); => Float / Double
+                  return (float)$value;
+               case 's': // matches: define('T_S', 's'); => String / Character
+                  return "'$value'";
+               case 'j': // matches: define('T_J', 'j'); => Json
+                  $value = addslashes(json_encode($value));
+                  return "'$value'";
+               case 'e': // matches: define('T_E', 'e'); => Enum
+                  if ($value instanceof Enum) {
+                     return $value->getValue();
+                  } else if ($value instanceof BackedEnum) {
+                     return $value->value;
+                  } else {
+                     return "'$value'";
+                  }
+               case 'b': // matches: define('T_B', 'b'); => Binary
+               case 'a': // matches: define('T_A', 'a'); => Opt-out of type enforcement
+               default:
+                  return $value;
+            }
+         })();
+         $paramValues[] = $typedValue;
+      }
       $query = str_replace('?', '%s', $query);
       $query = vsprintf($query, $paramValues);
       return $query;
