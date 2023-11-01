@@ -455,38 +455,23 @@ class QueryGenerator {
     */
    public function debugStringifyQuery(): string {
       [$query, $params] = $this->build();
-      $paramValues = [];
-      for ($i = 0; $i < count($params); $i += 2) {
-         $type = $params[$i];
-         $value = $params[$i + 1];
-
-         $typedValue = (function() use ($value, $type) {
-            switch ($type) {
-               case 'i': // matches: define('T_I', 'i'); => Integer / boolean
-                  return (int)$value;
-               case 'd': // matches: define('T_D', 'd'); => Float / Double
-                  return (float)$value;
-               case 's': // matches: define('T_S', 's'); => String / Character
-                  return "'$value'";
-               case 'j': // matches: define('T_J', 'j'); => Json
-                  $value = addslashes(json_encode($value));
-                  return "'$value'";
-               case 'e': // matches: define('T_E', 'e'); => Enum
-                  if ($value instanceof Enum) {
-                     return $value->getValue();
-                  } else if ($value instanceof BackedEnum) {
-                     return $value->value;
-                  } else {
-                     return "'$value'";
-                  }
-               case 'b': // matches: define('T_B', 'b'); => Binary
-               case 'a': // matches: define('T_A', 'a'); => Opt-out of type enforcement
-               default:
-                  return $value;
-            }
-         })();
-         $paramValues[] = $typedValue;
-      }
+      $chunks = array_chunk($params, 2);
+      $paramValues = array_map(function ($chunk) {
+         [$type, $value] = $chunk;
+         return match ($type) {
+            'i' => (int)$value,   // Integer / boolean
+            'd' => (float)$value, // Float / Double
+            's' => "'$value'",    // String / Character
+            'j' => "'".addslashes(json_encode($value))."'", // Json
+            'e' => match (true) { // Enum
+                  $value instanceof Enum => $value->getValue(),
+                  $value instanceof BackedEnum => $value->value,
+                  default => "'$value'"
+            },
+            'b', 'a' => $value,   // Binary, Opt-out of type enforcement
+            default => $value     // Default case
+         };
+      }, $chunks);
       $query = str_replace('?', '%s', $query);
       $query = vsprintf($query, $paramValues);
       return $query;
