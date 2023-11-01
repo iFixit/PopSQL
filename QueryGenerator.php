@@ -453,7 +453,7 @@ class QueryGenerator {
    /**
     * Debug method to print out the full query with the params inserted at the correct locations
     */
-   public function debugStringifyQuery(): string {
+   public function toDebugString(): string {
       [$query, $params] = $this->build();
       $chunks = array_chunk($params, 2);
       $paramValues = array_map(function ($chunk) {
