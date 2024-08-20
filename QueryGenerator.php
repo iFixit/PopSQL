@@ -278,7 +278,7 @@ class QueryGenerator {
 
       if ($clauses instanceof self) {
          $clauses->skipValidation();
-         [$clauses, $params] = $clauses->build(/* $skipClauses = */ true);
+         [$clauses, $params] = $clauses->build(skipClauses: true);
       }
 
       if (!is_array($clauses)) {
