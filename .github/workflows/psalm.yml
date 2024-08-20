@@ -13,20 +13,15 @@ jobs:
       name: psalm
       runs-on: ubuntu-latest
 
-      strategy:
-         matrix:
-            php-version: '8.3'
-
       timeout-minutes: 15
       steps:
          - name: Checkout code
            uses: actions/checkout@v4
 
-         - name: Set up PHP ${{ matrix.php-version }}
+         - name: Setup PHP
            uses: shivammathur/setup-php@v2
            with:
-              php-version: ${{ matrix.php-version }}
-
+              php-version: '8.3'
 
          - name: Run composer install
            run: composer install

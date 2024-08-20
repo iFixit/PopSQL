@@ -12,18 +12,14 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        php-version: '8.3'
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up PHP ${{ matrix.php-version }}
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php-version }}
+          php-version: '8.3'
 
       - name: Install dependencies
         run: composer install
