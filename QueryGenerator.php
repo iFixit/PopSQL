@@ -412,10 +412,8 @@ class QueryGenerator {
     * Return the primary clause in this QueryGenerator instance.
     * If multiple primary clauses have been set, all but the first set clause
     * will be ignored.
-    *
-    * @return string|false
     */
-   private function getPrimaryMethod(): string|bool {
+   private function getPrimaryMethod(): string|false {
       $primaryClauses = self::getPrimaryClauses();
       $setMethods = $this->getSetMethods();
       $setPrimaryClauses = array_intersect($primaryClauses, $setMethods);
@@ -464,10 +462,8 @@ class QueryGenerator {
    /**
     * return the appropriate glue string for the given clause, taking into
     * account $this->useOr
-    *
-    * @return string|false
     */
-   private function getGlue(string $method): string|bool {
+   private function getGlue(string $method): string|false {
       if ($method !== 'where' || !$this->useOr) {
          return self::$methods[$method]['glue'];
       } else {
