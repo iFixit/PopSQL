@@ -1,6 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <files psalm-version="5.25.0@01a8eb06b9e9cc6cfb6a320bf9fb14331919d505">
   <file src="QueryGenerator.php">
+    <MissingParamType>
+      <code><![CDATA[$args]]></code>
+      <code><![CDATA[$method]]></code>
+      <code><![CDATA[$method]]></code>
+      <code><![CDATA[$method]]></code>
+      <code><![CDATA[$skipClause]]></code>
+      <code><![CDATA[$skipClauses]]></code>
+    </MissingParamType>
+    <MissingReturnType>
+      <code><![CDATA[assertCompleteQuery]]></code>
+      <code><![CDATA[build]]></code>
+      <code><![CDATA[constructClause]]></code>
+      <code><![CDATA[getGlue]]></code>
+      <code><![CDATA[getPrimaryClauses]]></code>
+      <code><![CDATA[getPrimaryMethod]]></code>
+      <code><![CDATA[getSetMethods]]></code>
+      <code><![CDATA[skipValidation]]></code>
+      <code><![CDATA[useOr]]></code>
+    </MissingReturnType>
     <PossiblyUnusedMethod>
       <code><![CDATA[useOr]]></code>
     </PossiblyUnusedMethod>
@@ -9,6 +28,32 @@
     </UnusedProperty>
   </file>
   <file src="QueryGeneratorTest.php">
+    <MissingClosureReturnType>
+      <code><![CDATA[function() use ($qGen) {]]></code>
+      <code><![CDATA[function() use ($qGen) {]]></code>
+      <code><![CDATA[function() use ($qGen) {]]></code>
+      <code><![CDATA[function() use ($qGen) {]]></code>
+    </MissingClosureReturnType>
+    <MissingParamType>
+      <code><![CDATA[$callback]]></code>
+      <code><![CDATA[$expectedParams]]></code>
+      <code><![CDATA[$expectedQuery]]></code>
+      <code><![CDATA[$qGen]]></code>
+    </MissingParamType>
+    <MissingReturnType>
+      <code><![CDATA[assertQuery]]></code>
+      <code><![CDATA[didThrowException]]></code>
+      <code><![CDATA[testBigQuery]]></code>
+      <code><![CDATA[testCompleteQuery]]></code>
+      <code><![CDATA[testForUpdate]]></code>
+      <code><![CDATA[testIncompleteQuery]]></code>
+      <code><![CDATA[testModifiers]]></code>
+      <code><![CDATA[testNestedGenerators]]></code>
+      <code><![CDATA[testOnDuplicate]]></code>
+      <code><![CDATA[testSingleArguments]]></code>
+      <code><![CDATA[testSmallQuery]]></code>
+      <code><![CDATA[testUseOr]]></code>
+    </MissingReturnType>
     <UnusedClass>
       <code><![CDATA[QueryGeneratorTest]]></code>
     </UnusedClass>
