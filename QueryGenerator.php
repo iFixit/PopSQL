@@ -232,7 +232,7 @@ class QueryGenerator {
          'STRAIGHT_JOIN',
          'SQL_SMALL_RESULT', 'SQL_BIG_RESULT', 'SQL_BUFFER_RESULT',
          'SQL_CACHE', 'SQL_NO_CACHE',
-         'SQL_CALC_FOUND_ROWS'
+         'SQL_CALC_FOUND_ROWS',
       ],
       'insert' => ['LOW_PRIORITY', 'DELAYED', 'HIGH_PRIORITY', 'IGNORE'],
       'replace' => ['LOW_PRIORITY', 'DELAYED'],
@@ -263,8 +263,9 @@ class QueryGenerator {
          throw new Exception("Method \"$method\" does not exist.");
       }
 
-      $requiresArgument = (isset(self::$methods[$method]['requiresArgument']) ?
-       self::$methods[$method]['requiresArgument'] : false);
+      $requiresArgument = (isset(self::$methods[$method]['requiresArgument'])
+          ? self::$methods[$method]['requiresArgument']
+          : false);
 
       if ($requiresArgument && count($args) < 1) {
          throw new Exception("Missing argument 1 (\$clauses) for $method()");
@@ -272,12 +273,12 @@ class QueryGenerator {
          $clauses = reset($args);
          $params = [];
       } else {
-         list($clauses, $params) = $args;
+         [$clauses, $params] = $args;
       }
 
-      if ($clauses instanceOf QueryGenerator) {
+      if ($clauses instanceof self) {
          $clauses->skipValidation();
-         list($clauses, $params) = $clauses->build(/* $skipClauses = */ true);
+         [$clauses, $params] = $clauses->build(/* $skipClauses = */ true);
       }
 
       if (!is_array($clauses)) {
@@ -369,7 +370,8 @@ class QueryGenerator {
       if (!$primaryMethod) {
          $primaryClauseStr = implode("', '", $this->getPrimaryClauses());
          throw new MissingPrimaryClauseException(
-          "Missing primary clause. One of '$primaryClauseStr' needed.");
+            "Missing primary clause. One of '$primaryClauseStr' needed."
+         );
       }
 
       $minimumClauses = self::$minimumClauses[$primaryMethod];

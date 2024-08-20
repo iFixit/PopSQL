@@ -1,6 +1,6 @@
 <?php
 
-require("./QueryGenerator.php");
+require "./QueryGenerator.php";
 
 /**
  * Designed to work with PHPUnit
@@ -116,7 +116,7 @@ EOT;
       $qGen->from(['table1', 'table2']);
       $qGen->join([
          'INNER JOIN table3 USING (asdf)',
-         'OUTER JOIN table4 ON foo = bar'
+         'OUTER JOIN table4 ON foo = bar',
       ]);
       $qGen->where(['where1', 'where2 OR where3']);
       $qGen->group(['group1', 'group2']);
@@ -242,11 +242,11 @@ EOT;
    }
 
    public function assertQuery(QueryGenerator $qGen, string $expectedQuery, array $expectedParams): void {
-      list($actualQuery, $actualParams) = $qGen->build();
+      [$actualQuery, $actualParams] = $qGen->build();
       $this->assertEquals($expectedQuery, $actualQuery);
       $this->assertEquals($expectedParams, $actualParams);
 
-      list($actualQuery, $actualParams) = $qGen->skipValidation()->build();
+      [$actualQuery, $actualParams] = $qGen->skipValidation()->build();
       $this->assertEquals($expectedQuery, $actualQuery);
       $this->assertEquals($expectedParams, $actualParams);
    }
