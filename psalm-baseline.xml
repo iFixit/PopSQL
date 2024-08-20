@@ -15,32 +15,6 @@
     </UnusedProperty>
   </file>
   <file src="QueryGeneratorTest.php">
-    <MissingClosureReturnType>
-      <code><![CDATA[function() use ($qGen) {]]></code>
-      <code><![CDATA[function() use ($qGen) {]]></code>
-      <code><![CDATA[function() use ($qGen) {]]></code>
-      <code><![CDATA[function() use ($qGen) {]]></code>
-    </MissingClosureReturnType>
-    <MissingParamType>
-      <code><![CDATA[$callback]]></code>
-      <code><![CDATA[$expectedParams]]></code>
-      <code><![CDATA[$expectedQuery]]></code>
-      <code><![CDATA[$qGen]]></code>
-    </MissingParamType>
-    <MissingReturnType>
-      <code><![CDATA[assertQuery]]></code>
-      <code><![CDATA[didThrowException]]></code>
-      <code><![CDATA[testBigQuery]]></code>
-      <code><![CDATA[testCompleteQuery]]></code>
-      <code><![CDATA[testForUpdate]]></code>
-      <code><![CDATA[testIncompleteQuery]]></code>
-      <code><![CDATA[testModifiers]]></code>
-      <code><![CDATA[testNestedGenerators]]></code>
-      <code><![CDATA[testOnDuplicate]]></code>
-      <code><![CDATA[testSingleArguments]]></code>
-      <code><![CDATA[testSmallQuery]]></code>
-      <code><![CDATA[testUseOr]]></code>
-    </MissingReturnType>
     <UnusedClass>
       <code><![CDATA[QueryGeneratorTest]]></code>
     </UnusedClass>
