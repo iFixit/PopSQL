@@ -243,12 +243,12 @@ EOT;
 
    public function assertQuery($qGen, $expectedQuery, $expectedParams) {
       list($actualQuery, $actualParams) = $qGen->build();
-      $this->assertEquals($actualQuery, $expectedQuery);
-      $this->assertEquals($actualParams, $expectedParams);
+      $this->assertEquals($expectedQuery, $actualQuery);
+      $this->assertEquals($expectedParams, $actualParams);
 
       list($actualQuery, $actualParams) = $qGen->skipValidation()->build();
-      $this->assertEquals($actualQuery, $expectedQuery);
-      $this->assertEquals($actualParams, $expectedParams);
+      $this->assertEquals($expectedQuery, $actualQuery);
+      $this->assertEquals($expectedParams, $actualParams);
    }
 
    public function didThrowException($callback) {
