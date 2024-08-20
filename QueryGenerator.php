@@ -250,7 +250,7 @@ class QueryGenerator {
     * Append the given clause components and parameters to their existing
     * counterparts for the specified clause.
     */
-   public function &__call($method, $args) {
+   public function __call($method, $args) {
       $method = strtolower($method);
 
       if (!isset(self::$methods[$method])) {
@@ -335,7 +335,7 @@ class QueryGenerator {
    /**
     * Bypass query validation when building.
     */
-   public function &skipValidation() {
+   public function skipValidation(): self {
       $this->validateQuery = false;
       return $this;
    }
@@ -343,7 +343,7 @@ class QueryGenerator {
    /**
     * Use OR when joining where conditions
     */
-   public function &useOr() {
+   public function useOr(): self {
       $this->useOr = true;
       return $this;
    }

@@ -17,8 +17,6 @@
       <code><![CDATA[getPrimaryClauses]]></code>
       <code><![CDATA[getPrimaryMethod]]></code>
       <code><![CDATA[getSetMethods]]></code>
-      <code><![CDATA[skipValidation]]></code>
-      <code><![CDATA[useOr]]></code>
     </MissingReturnType>
     <PossiblyUnusedMethod>
       <code><![CDATA[useOr]]></code>
