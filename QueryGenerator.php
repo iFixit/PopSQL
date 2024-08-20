@@ -39,8 +39,10 @@ class QueryGenerator {
     * The keys of this array are the set of clauses that can compose different
     * statements. These correspond to methods that can be called on this class.
     * The values are the syntax rules for collapsing the corresponding clauses.
+    *
+    * @var array<string, array{clause: string, prefix: string, glue: string|false, suffix: string, requiresArgument?: bool}>
     */
-   private static $methods = [
+   private static array $methods = [
       'select' => [
          'clause' => 'SELECT <<MODIFIERS>> ',
          'prefix' => '',
@@ -183,8 +185,10 @@ class QueryGenerator {
     * The keys of this array are the primary clauses that can be present in a
     * MySQL query. Each primary clause has a set of valid sub-clauses that can
     * be present in a completed query of that type.
+    *
+    * @var array<string, list<string>>
     */
-   private static $possibleClauses = [
+   private static array $possibleClauses = [
       'select' => ['from', 'join', 'where', 'group', 'having', 'order', 'limit', 'offset', 'forupdate'],
       'insert' => ['set', 'columns', 'values', 'duplicate', 'as'],
       'replace' => ['set', 'columns', 'values'],
@@ -198,8 +202,10 @@ class QueryGenerator {
     * this array correspond to the minimum required set of sub-clauses needed
     * in each of these grammar sub-trees. A query will be considered complete
     * if it has all the sub-clauses listed in any of these sets.
+    *
+    * @var array<string, list<list<string>>>
     */
-   private static $minimumClauses = [
+   private static array $minimumClauses = [
       'select' => [['from']],
       'insert' => [['set'], ['columns', 'values']],
       'replace' => [['set'], ['columns', 'values']],
@@ -210,8 +216,10 @@ class QueryGenerator {
    /**
     * Each query type can specify a certain selection of modifiers. They each
     * change some aspect of how the query runs.
+    *
+    * @var array<string, list<string>>
     */
-   private static $queryModifiers = [
+   private static array $queryModifiers = [
       'select' => [
          'ALL', 'DISTINCT', 'DISTINCTROW',
          'HIGH_PRIORITY',
@@ -226,22 +234,16 @@ class QueryGenerator {
       'delete' => ['LOW_PRIORITY', 'QUICK', 'IGNORE'],
    ];
 
-   private $clauses;
-   private $params;
-   private $validateQuery;
-   private $useOr;
-
-   public function __construct() {
-      $this->clauses = [];
-      $this->params = [];
-
+   public function __construct(
+      private array $clauses = [],
+      private array $params = [],
+      private bool $validateQuery = true,
+      private bool $useOr = false,
+   ) {
       foreach (array_keys(self::$methods) as $method) {
          $this->clauses[$method] = [];
          $this->params[$method] = [];
       }
-
-      $this->validateQuery = true;
-      $this->useOr = false;
    }
 
    /**
