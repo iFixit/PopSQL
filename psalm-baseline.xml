@@ -1,26 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <files psalm-version="5.25.0@01a8eb06b9e9cc6cfb6a320bf9fb14331919d505">
   <file src="QueryGenerator.php">
-    <MissingParamType>
-      <code><![CDATA[$args]]></code>
-      <code><![CDATA[$method]]></code>
-      <code><![CDATA[$method]]></code>
-      <code><![CDATA[$method]]></code>
-      <code><![CDATA[$skipClause]]></code>
-      <code><![CDATA[$skipClauses]]></code>
-    </MissingParamType>
-    <MissingReturnType>
-      <code><![CDATA[assertCompleteQuery]]></code>
-      <code><![CDATA[build]]></code>
-      <code><![CDATA[constructClause]]></code>
-      <code><![CDATA[getGlue]]></code>
-      <code><![CDATA[getPrimaryClauses]]></code>
-      <code><![CDATA[getPrimaryMethod]]></code>
-      <code><![CDATA[getSetMethods]]></code>
-    </MissingReturnType>
+    <PossiblyFalseArgument>
+      <code><![CDATA[$glue]]></code>
+    </PossiblyFalseArgument>
     <PossiblyUnusedMethod>
       <code><![CDATA[useOr]]></code>
     </PossiblyUnusedMethod>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[!$primaryMethod]]></code>
+    </RiskyTruthyFalsyComparison>
     <UnusedProperty>
       <code><![CDATA[$queryModifiers]]></code>
     </UnusedProperty>
