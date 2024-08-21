@@ -1,0 +1,30 @@
+name: psalm
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+   psalm:
+      name: psalm
+      runs-on: ubuntu-latest
+
+      timeout-minutes: 15
+      steps:
+         - name: Checkout code
+           uses: actions/checkout@v4
+
+         - name: Setup PHP
+           uses: shivammathur/setup-php@v2
+           with:
+              php-version: '8.3'
+
+         - name: Run composer install
+           run: composer install
+
+         - name: Run psalm
+           run: ./vendor/bin/psalm --output-format=github --update-baseline

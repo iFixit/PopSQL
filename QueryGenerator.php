@@ -39,8 +39,16 @@ class QueryGenerator {
     * The keys of this array are the set of clauses that can compose different
     * statements. These correspond to methods that can be called on this class.
     * The values are the syntax rules for collapsing the corresponding clauses.
+    *
+    * @var non-empty-array<string, array{
+    *    clause: string,
+    *    prefix: string,
+    *    glue: string|false,
+    *    suffix: string,
+    *    requiresArgument?: bool
+    * }>
     */
-   private static $methods = [
+   private static array $methods = [
       'select' => [
          'clause' => 'SELECT <<MODIFIERS>> ',
          'prefix' => '',
@@ -183,8 +191,10 @@ class QueryGenerator {
     * The keys of this array are the primary clauses that can be present in a
     * MySQL query. Each primary clause has a set of valid sub-clauses that can
     * be present in a completed query of that type.
+    *
+    * @var non-empty-array<string, list<string>>
     */
-   private static $possibleClauses = [
+   private static array $possibleClauses = [
       'select' => ['from', 'join', 'where', 'group', 'having', 'order', 'limit', 'offset', 'forupdate'],
       'insert' => ['set', 'columns', 'values', 'duplicate', 'as'],
       'replace' => ['set', 'columns', 'values'],
@@ -198,8 +208,10 @@ class QueryGenerator {
     * this array correspond to the minimum required set of sub-clauses needed
     * in each of these grammar sub-trees. A query will be considered complete
     * if it has all the sub-clauses listed in any of these sets.
+    *
+    * @var array<string, list<list<string>>>
     */
-   private static $minimumClauses = [
+   private static array $minimumClauses = [
       'select' => [['from']],
       'insert' => [['set'], ['columns', 'values']],
       'replace' => [['set'], ['columns', 'values']],
@@ -210,15 +222,17 @@ class QueryGenerator {
    /**
     * Each query type can specify a certain selection of modifiers. They each
     * change some aspect of how the query runs.
+    *
+    * @var array<string, list<string>>
     */
-   private static $queryModifiers = [
+   private static array $queryModifiers = [
       'select' => [
          'ALL', 'DISTINCT', 'DISTINCTROW',
          'HIGH_PRIORITY',
          'STRAIGHT_JOIN',
          'SQL_SMALL_RESULT', 'SQL_BIG_RESULT', 'SQL_BUFFER_RESULT',
          'SQL_CACHE', 'SQL_NO_CACHE',
-         'SQL_CALC_FOUND_ROWS'
+         'SQL_CALC_FOUND_ROWS',
       ],
       'insert' => ['LOW_PRIORITY', 'DELAYED', 'HIGH_PRIORITY', 'IGNORE'],
       'replace' => ['LOW_PRIORITY', 'DELAYED'],
@@ -226,37 +240,32 @@ class QueryGenerator {
       'delete' => ['LOW_PRIORITY', 'QUICK', 'IGNORE'],
    ];
 
-   private $clauses;
-   private $params;
-   private $validateQuery;
-   private $useOr;
-
-   public function __construct() {
-      $this->clauses = [];
-      $this->params = [];
-
+   public function __construct(
+      private array $clauses = [],
+      private array $params = [],
+      private bool $validateQuery = true,
+      private bool $useOr = false,
+   ) {
       foreach (array_keys(self::$methods) as $method) {
          $this->clauses[$method] = [];
          $this->params[$method] = [];
       }
-
-      $this->validateQuery = true;
-      $this->useOr = false;
    }
 
    /**
     * Append the given clause components and parameters to their existing
     * counterparts for the specified clause.
     */
-   public function &__call($method, $args) {
+   public function __call(string $method, array $args) {
       $method = strtolower($method);
 
       if (!isset(self::$methods[$method])) {
          throw new Exception("Method \"$method\" does not exist.");
       }
 
-      $requiresArgument = (isset(self::$methods[$method]['requiresArgument']) ?
-       self::$methods[$method]['requiresArgument'] : false);
+      $requiresArgument = (isset(self::$methods[$method]['requiresArgument'])
+          ? self::$methods[$method]['requiresArgument']
+          : false);
 
       if ($requiresArgument && count($args) < 1) {
          throw new Exception("Missing argument 1 (\$clauses) for $method()");
@@ -264,12 +273,12 @@ class QueryGenerator {
          $clauses = reset($args);
          $params = [];
       } else {
-         list($clauses, $params) = $args;
+         [$clauses, $params] = $args;
       }
 
-      if ($clauses instanceOf QueryGenerator) {
+      if ($clauses instanceof self) {
          $clauses->skipValidation();
-         list($clauses, $params) = $clauses->build(/* $skipClauses = */ true);
+         [$clauses, $params] = $clauses->build(skipClauses: true);
       }
 
       if (!is_array($clauses)) {
@@ -298,13 +307,15 @@ class QueryGenerator {
     * (one of MissingPrimaryClauseException or MissingRequiredClauseException)
     * unless `skipValidation` has been called.
     *
-    * @param $skipClauses : Exclude the 'clause' part (WHERE, SELECT, FROM,
+    * @param bool $skipClauses : Exclude the 'clause' part (WHERE, SELECT, FROM,
     *                       ...) of each sub-expression. See constructClause
     *                       for more info. This is mostly for internal usage.
     *
     * Returns an array containing the query and paramter list, respectively.
+    *
+    * @return array{0: string, 1: array<string, mixed>}
     */
-   public function build($skipClauses = false) {
+   public function build(bool $skipClauses = false): array {
       if ($this->validateQuery) {
          $this->assertCompleteQuery();
       }
@@ -333,7 +344,7 @@ class QueryGenerator {
    /**
     * Bypass query validation when building.
     */
-   public function &skipValidation() {
+   public function skipValidation(): self {
       $this->validateQuery = false;
       return $this;
    }
@@ -341,7 +352,7 @@ class QueryGenerator {
    /**
     * Use OR when joining where conditions
     */
-   public function &useOr() {
+   public function useOr(): self {
       $this->useOr = true;
       return $this;
    }
@@ -349,14 +360,18 @@ class QueryGenerator {
    /**
     * Assert the completeness of this QueryGenerator instance by verifying
     * that all required clauses have been set.
+    *
+    * @throws MissingPrimaryClauseException
+    * @throws MissingRequiredClauseException
     */
-   private function assertCompleteQuery() {
+   private function assertCompleteQuery(): void {
       $primaryMethod = $this->getPrimaryMethod();
 
       if (!$primaryMethod) {
          $primaryClauseStr = implode("', '", $this->getPrimaryClauses());
          throw new MissingPrimaryClauseException(
-          "Missing primary clause. One of '$primaryClauseStr' needed.");
+            "Missing primary clause. One of '$primaryClauseStr' needed."
+         );
       }
 
       $minimumClauses = self::$minimumClauses[$primaryMethod];
@@ -380,13 +395,16 @@ class QueryGenerator {
       }, $minimumClauses);
       $requiredClauseStr = '{' . implode('}, {', $requiredClauseOptions) . '}';
       throw new MissingRequiredClauseException(
-       "Missing required clauses. One of $requiredClauseStr needed.");
+         "Missing required clauses. One of $requiredClauseStr needed."
+      );
    }
 
    /**
     * Return the list of primary query clauses.
+    *
+    * @return non-empty-list<string>
     */
-   private static function getPrimaryClauses() {
+   private static function getPrimaryClauses(): array {
       return array_keys(self::$possibleClauses);
    }
 
@@ -395,14 +413,17 @@ class QueryGenerator {
     * If multiple primary clauses have been set, all but the first set clause
     * will be ignored.
     */
-   private function getPrimaryMethod() {
+   private function getPrimaryMethod(): string|false {
       $primaryClauses = self::getPrimaryClauses();
       $setMethods = $this->getSetMethods();
       $setPrimaryClauses = array_intersect($primaryClauses, $setMethods);
       return reset($setPrimaryClauses);
    }
 
-   private function getSetMethods() {
+   /**
+    * @return array<string, string>
+    */
+   private function getSetMethods(): array {
       $methods = array_keys(array_filter($this->clauses));
       return array_combine($methods, $methods);
    }
@@ -416,7 +437,7 @@ class QueryGenerator {
     *    constructClause('where') => 'WHERE (foo = ?) AND (bar != ?)'
     *    constructClause('where', false) => '(foo = ?) AND (bar != ?)'
     */
-   private function constructClause($method, $skipClause = false) {
+   private function constructClause(string $method, bool $skipClause = false): string {
       $clauseInfo = self::$methods[$method];
       $prefix = $clauseInfo['prefix'];
       $clause = $clauseInfo['clause'];
@@ -442,7 +463,7 @@ class QueryGenerator {
     * return the appropriate glue string for the given clause, taking into
     * account $this->useOr
     */
-   private function getGlue($method) {
+   private function getGlue(string $method): string|false {
       if ($method !== 'where' || !$this->useOr) {
          return self::$methods[$method]['glue'];
       } else {

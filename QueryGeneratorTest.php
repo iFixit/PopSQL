@@ -1,12 +1,12 @@
 <?php
 
-require("./QueryGenerator.php");
+require "./QueryGenerator.php";
 
 /**
  * Designed to work with PHPUnit
  */
 class QueryGeneratorTest extends PHPUnit\Framework\TestCase {
-   public function testIncompleteQuery() {
+   public function testIncompleteQuery(): void {
       $incompleteQueryClauseSets = [
          'select' => [
             [],
@@ -48,10 +48,10 @@ class QueryGeneratorTest extends PHPUnit\Framework\TestCase {
                $qGen->$clause('clause');
             }
 
-            $build = function() use ($qGen) {
+            $build = function() use ($qGen): array {
                return $qGen->build();
             };
-            $buildIncomplete = function() use ($qGen) {
+            $buildIncomplete = function() use ($qGen): array {
                return $qGen->skipValidation()->build();
             };
 
@@ -61,7 +61,7 @@ class QueryGeneratorTest extends PHPUnit\Framework\TestCase {
       }
    }
 
-   public function testCompleteQuery() {
+   public function testCompleteQuery(): void {
       $completeQueryClauseSets = [
          'select' => [['select', 'from']],
          'insert' => [
@@ -83,10 +83,10 @@ class QueryGeneratorTest extends PHPUnit\Framework\TestCase {
                $qGen->$clause('clause');
             }
 
-            $build = function() use ($qGen) {
+            $build = function() use ($qGen): array {
                return $qGen->build();
             };
-            $buildIncomplete = function() use ($qGen) {
+            $buildIncomplete = function() use ($qGen): array {
                return $qGen->skipValidation()->build();
             };
 
@@ -96,7 +96,7 @@ class QueryGeneratorTest extends PHPUnit\Framework\TestCase {
       }
    }
 
-   public function testSmallQuery() {
+   public function testSmallQuery(): void {
       $qGen = new QueryGenerator();
       $qGen->select(['field']);
       $qGen->from(['table']);
@@ -110,13 +110,13 @@ EOT;
       $this->assertQuery($qGen, $expectedQuery, $expectedParams);
    }
 
-   public function testBigQuery() {
+   public function testBigQuery(): void {
       $qGen = new QueryGenerator();
       $qGen->select(['field1', 'field2']);
       $qGen->from(['table1', 'table2']);
       $qGen->join([
          'INNER JOIN table3 USING (asdf)',
-         'OUTER JOIN table4 ON foo = bar'
+         'OUTER JOIN table4 ON foo = bar',
       ]);
       $qGen->where(['where1', 'where2 OR where3']);
       $qGen->group(['group1', 'group2']);
@@ -142,7 +142,7 @@ EOT;
       $this->assertQuery($qGen, $expectedQuery, $expectedParams);
    }
 
-   public function testUseOr() {
+   public function testUseOr(): void {
       $qGen = new QueryGenerator();
       $qGen->select('field')
            ->from('table')
@@ -161,7 +161,7 @@ EOT;
       $this->assertQuery($qGen, $expectedQuery, $expectedParams);
    }
 
-   public function testNestedGenerators() {
+   public function testNestedGenerators(): void {
       $where = new QueryGenerator();
       $where->where('abcd', [1]);
       $qGen = new QueryGenerator();
@@ -179,7 +179,7 @@ EOT;
       $this->assertQuery($qGen, $expectedQuery, $expectedParams);
    }
 
-   public function testSingleArguments() {
+   public function testSingleArguments(): void {
       $qGen = new QueryGenerator();
       $qGen->select('field');
       $qGen->from('table');
@@ -193,7 +193,7 @@ EOT;
       $this->assertQuery($qGen, $expectedQuery, $expectedParams);
    }
 
-   public function testModifiers() {
+   public function testModifiers(): void {
       $qGen = new QueryGenerator();
       $qGen->insert('table');
       $qGen->set('field = ?', 0);
@@ -208,7 +208,7 @@ EOT;
       $this->assertQuery($qGen, $expectedQuery, $expectedParams);
    }
 
-   public function testForUpdate() {
+   public function testForUpdate(): void {
       $qGen = new QueryGenerator();
       $qGen->select('a');
       $qGen->from('b');
@@ -223,7 +223,7 @@ EOT;
       $this->assertQuery($qGen, $expectedQuery, []);
    }
 
-   public function testOnDuplicate() {
+   public function testOnDuplicate(): void {
       $qGen = new QueryGenerator();
       $qGen->insert('a');
       $qGen->as('row');
@@ -241,17 +241,21 @@ EOT;
       $this->assertQuery($qGen, $expectedQuery, []);
    }
 
-   public function assertQuery($qGen, $expectedQuery, $expectedParams) {
-      list($actualQuery, $actualParams) = $qGen->build();
-      $this->assertEquals($actualQuery, $expectedQuery);
-      $this->assertEquals($actualParams, $expectedParams);
+   public function assertQuery(QueryGenerator $qGen, string $expectedQuery, array $expectedParams): void {
+      [$actualQuery, $actualParams] = $qGen->build();
+      $this->assertEquals($expectedQuery, $actualQuery);
+      $this->assertEquals($expectedParams, $actualParams);
 
-      list($actualQuery, $actualParams) = $qGen->skipValidation()->build();
-      $this->assertEquals($actualQuery, $expectedQuery);
-      $this->assertEquals($actualParams, $expectedParams);
+      [$actualQuery, $actualParams] = $qGen->skipValidation()->build();
+      $this->assertEquals($expectedQuery, $actualQuery);
+      $this->assertEquals($expectedParams, $actualParams);
    }
 
-   public function didThrowException($callback) {
+   /**
+    * @param callable $callback
+    * @return non-falsy-string|bool
+    */
+   public function didThrowException($callback): string|bool {
       try {
          $callback();
          return false;

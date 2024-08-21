@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<files psalm-version="5.25.0@01a8eb06b9e9cc6cfb6a320bf9fb14331919d505">
+  <file src="QueryGenerator.php">
+    <PossiblyFalseArgument>
+      <code><![CDATA[$glue]]></code>
+    </PossiblyFalseArgument>
+    <PossiblyUnusedMethod>
+      <code><![CDATA[useOr]]></code>
+    </PossiblyUnusedMethod>
+    <RiskyTruthyFalsyComparison>
+      <code><![CDATA[!$primaryMethod]]></code>
+    </RiskyTruthyFalsyComparison>
+    <UnusedProperty>
+      <code><![CDATA[$queryModifiers]]></code>
+    </UnusedProperty>
+  </file>
+  <file src="QueryGeneratorTest.php">
+    <UnusedClass>
+      <code><![CDATA[QueryGeneratorTest]]></code>
+    </UnusedClass>
+  </file>
+</files>

@@ -1,7 +1,5 @@
 # PopSQL
 
-[![Build Status](https://secure.travis-ci.org/iFixit/PopSQL.png?branch=master)](http://travis-ci.org/iFixit/PopSQL)
-
 ## What is it?
 
 PopSQL (pronounced "popsicle") provides a simple, objective approach to
