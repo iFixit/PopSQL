@@ -241,6 +241,144 @@ EOT;
       $this->assertQuery($qGen, $expectedQuery, []);
    }
 
+   public function testUnion(): void {
+      $other = new QueryGenerator();
+      $other->select('field');
+      $other->from('table2');
+
+      $qGen = new QueryGenerator();
+      $qGen->select('field');
+      $qGen->from('table');
+      $qGen->union($other);
+
+      $expectedQuery = <<<EOT
+SELECT field
+FROM table
+UNION
+SELECT field
+FROM table2
+EOT;
+
+      $this->assertQuery($qGen, $expectedQuery, []);
+   }
+
+   public function testUnionAll(): void {
+      $other = new QueryGenerator();
+      $other->select('field');
+      $other->from('table2');
+
+      $qGen = new QueryGenerator();
+      $qGen->select('field');
+      $qGen->from('table');
+      $qGen = $qGen->unionAll($other);
+
+      $expectedQuery = <<<EOT
+SELECT field
+FROM table
+UNION ALL
+SELECT field
+FROM table2
+EOT;
+
+      $this->assertQuery($qGen, $expectedQuery, []);
+   }
+
+   public function testMixedUnions(): void {
+      $qGen = new QueryGenerator();
+      $qGen->select('a');
+      $qGen->from('b');
+      $qGen->union('SELECT a FROM c');
+      $qGen->unionAll('SELECT a FROM d');
+
+      $expectedQuery = <<<EOT
+SELECT a
+FROM b
+UNION
+SELECT a FROM c
+UNION ALL
+SELECT a FROM d
+EOT;
+
+      $this->assertQuery($qGen, $expectedQuery, []);
+   }
+
+   public function testUnionStringOperand(): void {
+      $qGen = new QueryGenerator();
+      $qGen->select('id');
+      $qGen->from('live');
+      $qGen->union('SELECT id FROM archive WHERE x = ?', 5);
+
+      $expectedQuery = <<<EOT
+SELECT id
+FROM live
+UNION
+SELECT id FROM archive WHERE x = ?
+EOT;
+
+      $this->assertQuery($qGen, $expectedQuery, [5]);
+   }
+
+   public function testUnionParamOrdering(): void {
+      $other = new QueryGenerator();
+      $other->select('a');
+      $other->from('c');
+      $other->where('y = ?', 2);
+
+      $qGen = new QueryGenerator();
+      $qGen->select('a');
+      $qGen->from('b');
+      $qGen->where('x = ?', 1);
+      $qGen->union($other);
+      $qGen->order('a');
+      $qGen->limit(10);
+      $qGen->offset('?', 5);
+
+      $expectedQuery = <<<EOT
+SELECT a
+FROM b
+WHERE (x = ?)
+UNION
+SELECT a
+FROM c
+WHERE (y = ?)
+ORDER BY a
+LIMIT 10
+OFFSET ?
+EOT;
+
+      $this->assertQuery($qGen, $expectedQuery, [1, 2, 5]);
+   }
+
+   public function testUnionGeneratorOperandWithParamsThrows(): void {
+      $other = new QueryGenerator();
+      $other->select('a');
+      $other->from('c');
+
+      $qGen = new QueryGenerator();
+      $qGen->select('a');
+      $qGen->from('b');
+
+      $this->expectException(Exception::class);
+      $qGen->union($other, [1]);
+   }
+
+   public function testUnionOperandValidation(): void {
+      $incomplete = new QueryGenerator();
+      $incomplete->select('a');
+
+      $qGen = new QueryGenerator();
+      $qGen->select('a');
+      $qGen->from('b');
+
+      $union = function() use ($qGen, $incomplete): QueryGenerator {
+         return $qGen->union($incomplete);
+      };
+
+      $this->assertTrue((bool)$this->didThrowException($union));
+      $incomplete->skipValidation();
+      $this->assertFalse($this->didThrowException($union));
+   }
+
    public function assertQuery(QueryGenerator $qGen, string $expectedQuery, array $expectedParams): void {
       [$actualQuery, $actualParams] = $qGen->build();
       $this->assertEquals($expectedQuery, $actualQuery);
