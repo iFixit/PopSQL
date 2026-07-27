@@ -84,7 +84,7 @@ WHERE field1 > ? AND field3 < ?
 
 QueryGenerator has support for SELECT, INSERT, REPLACE, UPDATE, and DELETE
 queries. Each of those query types supports a selection of different clauses:
- * select: from, join, where, group, having, order, limit, offset, forupdate
+ * select: from, join, where, group, having, union, order, limit, offset, forupdate
  * insert: set, columns, values, duplicate
  * replace: set, columns, values
  * update: set, where, order, limit
@@ -92,3 +92,21 @@ queries. Each of those query types supports a selection of different clauses:
 
 Simply call the member function of the clause you want to add to, passing
 strings of SQL and (optionally) parameters for use in prepared statements.
+
+SELECT queries can be combined with `union()` and `unionAll()`. Operands
+must be complete SELECT statements, either another QueryGenerator or a raw
+SQL string:
+
+```php
+$archived = new QueryGenerator();
+$archived->select('id')->from('archived_orders')->where('total > ?', 100);
+
+$qGen = new QueryGenerator();
+$qGen->select('id')->from('orders')->where('total > ?', 100);
+$qGen->union($archived);
+$qGen->unionAll('SELECT id FROM pending_orders');
+$qGen->order('id');
+```
+
+A trailing `order()` or `limit()` applies to the whole union result. To
+order or limit an individual operand, pass it as a parenthesized string.
