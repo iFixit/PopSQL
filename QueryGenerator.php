@@ -11,7 +11,7 @@
  *
  * Available clauses / methods are:
  *  select, insert, replace, update, delete, from, join, set, columns, values,
- *  where, group, having, order, limit, offset, duplicate, modify
+ *  where, group, having, union, order, limit, offset, duplicate, modify
  *
  * After all clauses have been built, call the 'build' member function to
  * compose the entire query. This returns an array containing the query and
@@ -136,6 +136,12 @@ class QueryGenerator {
          'suffix' => ')',
          'requiresArgument' => true,
       ],
+      'union' => [
+         'clause' => '',
+         'prefix' => '',
+         'glue' => "\n",
+         'suffix' => '',
+      ],
       'order' => [
          'clause' => 'ORDER BY ',
          'prefix' => '',
@@ -195,7 +201,7 @@ class QueryGenerator {
     * @var non-empty-array<string, list<string>>
     */
    private static array $possibleClauses = [
-      'select' => ['from', 'join', 'where', 'group', 'having', 'order', 'limit', 'offset', 'forupdate'],
+      'select' => ['from', 'join', 'where', 'group', 'having', 'union', 'order', 'limit', 'offset', 'forupdate'],
       'insert' => ['set', 'columns', 'values', 'duplicate', 'as'],
       'replace' => ['set', 'columns', 'values'],
       'update' => ['set', 'where', 'order', 'limit'],
@@ -296,6 +302,33 @@ class QueryGenerator {
       $this->clauses[$method] = array_merge($this->clauses[$method], $clauses);
       $this->params[$method] = array_merge($this->params[$method], $params);
 
+      return $this;
+   }
+
+   /**
+    * Append a UNION operand rendered as a complete SELECT statement.
+    * QueryGenerator operands are built (and validated, unless the operand
+    * has called skipValidation) immediately.
+    */
+   public function union(self|string $query, mixed $params = []): self {
+      return $this->addUnion('UNION', $query, $params);
+   }
+
+   public function unionAll(self|string $query, mixed $params = []): self {
+      return $this->addUnion('UNION ALL', $query, $params);
+   }
+
+   private function addUnion(string $keyword, self|string $query, mixed $params): self {
+      if ($query instanceof self) {
+         [$query, $params] = $query->build();
+      }
+
+      if (!is_array($params)) {
+         $params = [$params];
+      }
+
+      $this->clauses['union'][] = "$keyword\n$query";
+      $this->params['union'] = array_merge($this->params['union'], $params);
       return $this;
    }
 
