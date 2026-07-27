@@ -110,3 +110,6 @@ $qGen->order('id');
 
 A trailing `order()` or `limit()` applies to the whole union result. To
 order or limit an individual operand, pass it as a parenthesized string.
+
+QueryGenerator operands are rendered when `union()` or `unionAll()` is
+called; mutating the operand afterward has no effect on the outer query.
