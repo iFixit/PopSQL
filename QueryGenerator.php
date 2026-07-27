@@ -352,7 +352,7 @@ class QueryGenerator {
     *
     * Returns an array containing the query and paramter list, respectively.
     *
-    * @return array{0: string, 1: array<string, mixed>}
+    * @return array{0: string, 1: list<mixed>}
     */
    public function build(bool $skipClauses = false): array {
       if ($this->validateQuery) {
@@ -377,7 +377,7 @@ class QueryGenerator {
          $clauses[] = $this->constructClause($method, $skipClauses);
          $params = array_merge($params, $this->params[$method]);
       }
-      return [implode("\n", $clauses), $params];
+      return [implode("\n", $clauses), array_values($params)];
    }
 
    /**
