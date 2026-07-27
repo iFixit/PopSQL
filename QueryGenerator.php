@@ -320,6 +320,12 @@ class QueryGenerator {
 
    private function addUnion(string $keyword, self|string $query, mixed $params): self {
       if ($query instanceof self) {
+         if ($params !== []) {
+            throw new Exception(
+               "Params can't be passed alongside a QueryGenerator operand; " .
+               "add them to the operand instead."
+            );
+         }
          [$query, $params] = $query->build();
       }
 

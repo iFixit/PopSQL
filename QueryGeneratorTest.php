@@ -349,6 +349,19 @@ EOT;
       $this->assertQuery($qGen, $expectedQuery, [1, 2, 5]);
    }
 
+   public function testUnionGeneratorOperandWithParamsThrows(): void {
+      $other = new QueryGenerator();
+      $other->select('a');
+      $other->from('c');
+
+      $qGen = new QueryGenerator();
+      $qGen->select('a');
+      $qGen->from('b');
+
+      $this->expectException(Exception::class);
+      $qGen->union($other, [1]);
+   }
+
    public function testUnionOperandValidation(): void {
       $incomplete = new QueryGenerator();
       $incomplete->select('a');
