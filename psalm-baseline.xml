@@ -4,9 +4,6 @@
     <PossiblyFalseArgument>
       <code><![CDATA[$glue]]></code>
     </PossiblyFalseArgument>
-    <PossiblyUnusedMethod>
-      <code><![CDATA[useOr]]></code>
-    </PossiblyUnusedMethod>
     <RiskyTruthyFalsyComparison>
       <code><![CDATA[!$primaryMethod]]></code>
     </RiskyTruthyFalsyComparison>

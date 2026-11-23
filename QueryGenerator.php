@@ -262,7 +262,7 @@ class QueryGenerator {
     * Append the given clause components and parameters to their existing
     * counterparts for the specified clause.
     */
-   public function __call(string $method, array $args) {
+   public function __call(string $method, array $args): static {
       $method = strtolower($method);
 
       if (!isset(self::$methods[$method])) {
