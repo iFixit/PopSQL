@@ -310,15 +310,15 @@ class QueryGenerator {
     * QueryGenerator operands are built (and validated, unless the operand
     * has called skipValidation) immediately.
     */
-   public function union(self|string $query, mixed $params = []): self {
+   public function union(self|string $query, mixed $params = []): static {
       return $this->addUnion('UNION', $query, $params);
    }
 
-   public function unionAll(self|string $query, mixed $params = []): self {
+   public function unionAll(self|string $query, mixed $params = []): static {
       return $this->addUnion('UNION ALL', $query, $params);
    }
 
-   private function addUnion(string $keyword, self|string $query, mixed $params): self {
+   private function addUnion(string $keyword, self|string $query, mixed $params): static {
       if ($query instanceof self) {
          if ($params !== []) {
             throw new Exception(
@@ -352,7 +352,7 @@ class QueryGenerator {
     *
     * Returns an array containing the query and paramter list, respectively.
     *
-    * @return array{0: string, 1: list<mixed>}
+    * @return list{string, list<mixed>}
     */
    public function build(bool $skipClauses = false): array {
       if ($this->validateQuery) {
@@ -383,7 +383,7 @@ class QueryGenerator {
    /**
     * Bypass query validation when building.
     */
-   public function skipValidation(): self {
+   public function skipValidation(): static {
       $this->validateQuery = false;
       return $this;
    }
@@ -391,7 +391,7 @@ class QueryGenerator {
    /**
     * Use OR when joining where conditions
     */
-   public function useOr(): self {
+   public function useOr(): static {
       $this->useOr = true;
       return $this;
    }
